@@ -10,4 +10,21 @@
     <string name="review_placeholder">Transactions requiring review will appear here.</string>
     <string name="analytics_placeholder">Your spending analytics will appear here.</string>
     <string name="settings_placeholder">Manage your Spendly preferences here.</string>
+    <string name="add_transaction">Add transaction</string>
+    <string name="amount">Amount</string>
+    <string name="transaction_type">Type</string>
+    <string name="expense">Expense</string>
+    <string name="income">Income</string>
+    <string name="transfer">Transfer</string>
+    <string name="category">Category</string>
+    <string name="choose_category">Choose category</string>
+    <string name="no_category">No category</string>
+    <string name="no_active_categories">No active categories available.</string>
+    <string name="merchant_optional">Merchant (optional)</string>
+    <string name="date">Date</string>
+    <string name="save_transaction">Save transaction</string>
+    <string name="saving">Saving…</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="back">Back</string>
 </resources>
