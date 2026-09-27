@@ -2,6 +2,7 @@ package com.spendly.ui.transactions.edit
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.spendly.domain.model.Category
 import com.spendly.domain.model.Transaction
 import com.spendly.domain.model.TransactionType
 import com.spendly.domain.repository.CategoryRepository
@@ -33,6 +34,7 @@ class EditTransactionViewModel(
     private val completedChannel = Channel<Unit>(Channel.BUFFERED)
     val completedEvents = completedChannel.receiveAsFlow()
     private var original: Transaction? = null
+    private var originalCategory: Category? = null
 
     init {
         viewModelScope.launch {
@@ -59,9 +61,15 @@ class EditTransactionViewModel(
                 categories.observeAll().catch {
                     updateReady { it.copy(form = it.form.copy(categoryLoadError = "Categories could not be loaded.")) }
                 }.collect { allCategories ->
+                    originalCategory = allCategories.firstOrNull { it.id == transaction.categoryId }
                     updateReady { state ->
+                        val activeCategories = allCategories.filter { it.isActive }
+                        val selectedInactive = originalCategory?.takeIf { category ->
+                            !category.isActive && state.form.selectedCategoryId == category.id
+                        }
                         state.copy(form = state.form.copy(
-                            categories = allCategories.filter { it.isActive || it.id == state.form.selectedCategoryId },
+                            categories = activeCategories,
+                            selectedInactiveCategoryName = selectedInactive?.let { "${it.name} (Inactive)" },
                             categoryLoadError = null,
                         ))
                     }
@@ -84,13 +92,21 @@ class EditTransactionViewModel(
 
     fun onTypeSelected(value: TransactionType) = updateReady {
         if (it.isSaving || it.isDeleting || it.form.transactionType == value) it else it.copy(
-            form = it.form.copy(transactionType = value, selectedCategoryId = null, categoryError = null),
+            form = it.form.copy(
+                transactionType = value,
+                selectedCategoryId = null,
+                selectedInactiveCategoryName = null,
+                categoryError = null,
+            ),
             operationError = null,
         )
     }
 
     fun onCategorySelected(id: Long?) = updateReady {
-        if (it.isSaving || it.isDeleting) it else it.copy(form = it.form.copy(selectedCategoryId = id, categoryError = null), operationError = null)
+        if (it.isSaving || it.isDeleting) it else it.copy(
+            form = it.form.copy(selectedCategoryId = id, selectedInactiveCategoryName = null, categoryError = null),
+            operationError = null,
+        )
     }
 
     fun onMerchantChanged(value: String) = updateReady {
@@ -106,9 +122,12 @@ class EditTransactionViewModel(
         val transaction = original ?: return
         if (state.isSaving || state.isDeleting || state.showDeleteConfirmation) return
         val form = state.form
+        val validationCategories = form.categories + listOfNotNull(originalCategory).filter {
+            !it.isActive && it.id == transaction.categoryId && form.selectedCategoryId == it.id
+        }
         val validation = TransactionFormValidator.validate(
             form.amountInput, form.currencyCode, fractionDigits(form.currencyCode),
-            form.transactionType, form.selectedCategoryId, form.categories,
+            form.transactionType, form.selectedCategoryId, validationCategories,
         )
         if (!validation.isValid) {
             updateReady { it.copy(form = it.form.copy(amountError = validation.amountError, categoryError = validation.categoryError), operationError = null) }

@@ -1,6 +1,6 @@
 # Spendly
 
-Spendly is a local-first Android personal expense tracker. The project has an application shell, a core finance domain model, Room-based local persistence, and manual transaction creation, history, editing, and deletion. Automatic Google Wallet capture is planned.
+Spendly is a local-first Android personal expense tracker. The project has an application shell, a core finance domain model, Room-based local persistence, manual transaction management, and category management. Automatic Google Wallet capture is planned.
 
 ## Technology
 
@@ -13,6 +13,7 @@ Spendly is a local-first Android personal expense tracker. The project has an ap
 - State-driven transaction entry and editing with shared validation and decimal-safe amount conversion
 - Reactive transaction history with category names and newest-first ordering
 - Transaction deletion with confirmation
+- Settings-based category management with custom creation, custom renaming, and activation controls
 
 ## Planned capabilities
 
@@ -25,6 +26,8 @@ The following are future plans and are **not implemented yet**:
 - A home-screen budget widget
 
 The app stores transactions locally through Room. The Transactions screen shows current history; tap a row to edit or delete it, or use Add transaction to create one. Changes appear in the list automatically. The optional label on the form is stored as `merchant`, while `description` remains null for manually created transactions. Editing retains the original transaction ID, source, import fields, notes, description, and creation time.
+
+Settings → Categories shows active and inactive categories. Users can add and rename custom categories, and deactivate or reactivate any category. Built-in category names remain fixed; their built-in status is retained when their active state changes. Inactive categories stay on historical transactions but are omitted from new category choices. Categories cannot be permanently deleted. Category-specific budgets are not implemented.
 
 ## Build
 

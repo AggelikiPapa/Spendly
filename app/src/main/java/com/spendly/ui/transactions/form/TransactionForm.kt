@@ -102,6 +102,7 @@ fun TransactionForm(
             Text(stringResource(R.string.category), style = MaterialTheme.typography.titleMedium)
             Box {
                 val selectedName = values.categories.firstOrNull { it.id == values.selectedCategoryId }?.name
+                    ?: values.selectedInactiveCategoryName
                 OutlinedButton(
                     onClick = { categoryMenuExpanded = true },
                     enabled = enabled && values.categories.isNotEmpty(),

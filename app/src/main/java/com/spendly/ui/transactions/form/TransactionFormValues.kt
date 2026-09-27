@@ -12,6 +12,7 @@ data class TransactionFormValues(
     val merchantInput: String,
     val selectedDate: LocalDate,
     val categories: List<Category>,
+    val selectedInactiveCategoryName: String? = null,
     val amountError: String? = null,
     val categoryError: String? = null,
     val categoryLoadError: String? = null,

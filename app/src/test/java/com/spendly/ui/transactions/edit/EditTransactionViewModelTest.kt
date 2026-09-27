@@ -100,6 +100,21 @@ class EditTransactionViewModelTest {
         assertTrue(transactions.updates.isEmpty())
     }
 
+    @Test fun inactiveHistoricalCategoryIsShownButNotSelectableAndIsPreserved() = runTest {
+        categories.items.value = listOf(Category(1, "Groceries", true, false))
+        val vm = newViewModel()
+        advanceUntilIdle()
+        val loaded = vm.uiState.value as EditTransactionUiState.Ready
+        assertTrue(loaded.form.categories.isEmpty())
+        assertEquals("Groceries (Inactive)", loaded.form.selectedInactiveCategoryName)
+
+        vm.onMerchantChanged("Updated shop")
+        vm.save()
+        advanceUntilIdle()
+        assertEquals(1L, transactions.updates.single().categoryId)
+        assertEquals("Updated shop", transactions.updates.single().merchant)
+    }
+
     @Test fun deletionRequiresConfirmationAndOccursOnce() = runTest {
         val vm = newViewModel()
         advanceUntilIdle()

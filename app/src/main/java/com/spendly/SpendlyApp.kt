@@ -24,6 +24,9 @@ import com.spendly.ui.navigation.SpendlyDestination
 import com.spendly.ui.navigation.SpendlyRoutes
 import com.spendly.ui.review.ReviewScreen
 import com.spendly.ui.settings.SettingsScreen
+import com.spendly.ui.settings.categories.CategoryManagementScreen
+import com.spendly.ui.settings.categories.CategoryManagementViewModel
+import com.spendly.ui.settings.categories.categoryManagementViewModelFactory
 import com.spendly.ui.transactions.TransactionsScreen
 import com.spendly.ui.transactions.TransactionsViewModel
 import com.spendly.ui.transactions.transactionsViewModelFactory
@@ -41,7 +44,9 @@ fun SpendlyApp() {
 
     Scaffold(
         bottomBar = {
-            if (currentRoute != SpendlyRoutes.AddTransaction && currentRoute != SpendlyRoutes.EditTransaction) {
+            if (currentRoute != SpendlyRoutes.AddTransaction && currentRoute != SpendlyRoutes.EditTransaction &&
+                currentRoute != SpendlyRoutes.Categories
+            ) {
                 NavigationBar {
                     SpendlyDestination.entries.forEach { destination ->
                         val label = stringResource(destination.labelResId)
@@ -90,7 +95,17 @@ fun SpendlyApp() {
             }
             composable(SpendlyDestination.Review.route) { ReviewScreen(innerPadding) }
             composable(SpendlyDestination.Analytics.route) { AnalyticsScreen(innerPadding) }
-            composable(SpendlyDestination.Settings.route) { SettingsScreen(innerPadding) }
+            composable(SpendlyDestination.Settings.route) {
+                SettingsScreen(innerPadding) { navController.navigate(SpendlyRoutes.Categories) }
+            }
+            composable(SpendlyRoutes.Categories) { entry ->
+                val application = LocalContext.current.applicationContext as SpendlyApplication
+                val viewModel: CategoryManagementViewModel = viewModel(
+                    viewModelStoreOwner = entry,
+                    factory = categoryManagementViewModelFactory(application.categoryRepository),
+                )
+                CategoryManagementScreen(viewModel, innerPadding) { navController.popBackStack() }
+            }
             composable(SpendlyRoutes.AddTransaction) { entry ->
                 val application = LocalContext.current.applicationContext as SpendlyApplication
                 val viewModel: AddTransactionViewModel = viewModel(
