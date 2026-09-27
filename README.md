@@ -1,6 +1,6 @@
 # Spendly
 
-Spendly is a local-first Android personal expense tracker. The project currently has an application shell, a core finance domain model, Room-based local persistence, and manual transaction creation. Transaction history, editing, deletion, and automatic Google Wallet capture are not implemented yet.
+Spendly is a local-first Android personal expense tracker. The project has an application shell, a core finance domain model, Room-based local persistence, and manual transaction creation, history, editing, and deletion. Automatic Google Wallet capture is planned.
 
 ## Technology
 
@@ -10,20 +10,21 @@ Spendly is a local-first Android personal expense tracker. The project currently
 - A feature-oriented UI structure ready for state-driven screens and coroutines
 - Plain Kotlin domain models for money, transactions, categories, and monthly budgets
 - Room database and repository implementations for local storage
-- State-driven manual transaction entry with a ViewModel and decimal-safe amount conversion
+- State-driven transaction entry and editing with shared validation and decimal-safe amount conversion
+- Reactive transaction history with category names and newest-first ordering
+- Transaction deletion with confirmation
 
 ## Planned capabilities
 
 The following are future plans and are **not implemented yet**:
 
-- Transaction history, editing, and deletion
 - Google Wallet notification import
 - Monthly spending limits
 - Spending alerts
 - Spending analytics
 - A home-screen budget widget
 
-The app stores manually created transactions locally through Room. The Transactions screen provides the entry point; a transaction list is planned for a later ticket. The optional label on the form is stored as `merchant`, while `description` remains null.
+The app stores transactions locally through Room. The Transactions screen shows current history; tap a row to edit or delete it, or use Add transaction to create one. Changes appear in the list automatically. The optional label on the form is stored as `merchant`, while `description` remains null for manually created transactions. Editing retains the original transaction ID, source, import fields, notes, description, and creation time.
 
 ## Build
 

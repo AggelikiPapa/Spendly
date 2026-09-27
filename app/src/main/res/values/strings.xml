@@ -27,4 +27,10 @@
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
     <string name="back">Back</string>
+    <string name="no_transactions">No transactions yet. Add your first transaction.</string>
+    <string name="edit_transaction">Edit transaction</string>
+    <string name="delete_transaction">Delete transaction</string>
+    <string name="confirm_delete_transaction">Delete this transaction permanently?</string>
+    <string name="deleting">Deleting…</string>
+    <string name="transaction_not_found">This transaction could not be found.</string>
 </resources>

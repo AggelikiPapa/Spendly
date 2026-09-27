@@ -2,13 +2,13 @@ package com.spendly.ui.transactions.add
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.spendly.domain.MoneyInputParser
 import com.spendly.domain.model.ImportStatus
 import com.spendly.domain.model.Transaction
 import com.spendly.domain.model.TransactionSource
 import com.spendly.domain.model.TransactionType
 import com.spendly.domain.repository.CategoryRepository
 import com.spendly.domain.repository.TransactionRepository
+import com.spendly.ui.transactions.form.TransactionFormValidator
 import java.time.Clock
 import java.time.LocalDateTime
 import kotlinx.coroutines.CancellationException
@@ -88,19 +88,20 @@ class AddTransactionViewModel(
         val state = uiState.value
         if (state.isSaving) return
 
-        val amount = MoneyInputParser.parsePositive(state.amountInput, "EUR", 2)
-        val categoryValid = state.transactionType != TransactionType.EXPENSE ||
-            state.categories.any { it.id == state.selectedCategoryId }
-        if (amount == null || !categoryValid) {
+        val validation = TransactionFormValidator.validate(
+            state.amountInput, "EUR", 2, state.transactionType, state.selectedCategoryId, state.categories,
+        )
+        if (!validation.isValid) {
             mutableUiState.update {
                 it.copy(
-                    amountError = if (amount == null) "Enter an amount greater than zero (up to 2 decimals)." else null,
-                    categoryError = if (!categoryValid) "Choose a category for an expense." else null,
+                    amountError = validation.amountError,
+                    categoryError = validation.categoryError,
                     saveError = null,
                 )
             }
             return
         }
+        val amount = validation.amount ?: return
 
         mutableUiState.update { it.copy(isSaving = true, amountError = null, categoryError = null, saveError = null) }
         viewModelScope.launch {
