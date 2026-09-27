@@ -20,4 +20,10 @@ enum class SpendlyDestination(
     Review("review", R.string.review, Icons.Outlined.RateReview),
     Analytics("analytics", R.string.analytics, Icons.Outlined.Analytics),
     Settings("settings", R.string.settings, Icons.Outlined.Settings),
+
+    ;
+
+    companion object {
+        val bottomNavigation: List<SpendlyDestination> = listOf(Dashboard, Transactions, Analytics)
+    }
 }

@@ -45,4 +45,11 @@
     <string name="custom_category">Custom</string>
     <string name="rename">Rename</string>
     <string name="save">Save</string>
+    <string name="needs_review">Needs review</string>
+    <string name="budget_section">Budget</string>
+    <string name="monthly_spending_limit">Monthly spending limit</string>
+    <string name="monthly_budget">Monthly budget</string>
+    <string name="spending_limit">Spending limit</string>
+    <string name="current_spending_limit">Current limit:</string>
+    <string name="budget_saved">Monthly budget saved.</string>
 </resources>

@@ -21,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -40,6 +41,7 @@ fun TransactionsScreen(
     contentPadding: PaddingValues,
     onAddTransaction: () -> Unit,
     onOpenTransaction: (Long) -> Unit,
+    onReviewTransactions: () -> Unit,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     Column(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
@@ -54,6 +56,10 @@ fun TransactionsScreen(
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.add_transaction))
             }
+        }
+
+        TextButton(onClick = onReviewTransactions, modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)) {
+            Text(stringResource(R.string.needs_review))
         }
 
         when {

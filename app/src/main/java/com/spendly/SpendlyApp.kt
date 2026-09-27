@@ -1,11 +1,17 @@
 package com.spendly
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -27,6 +33,9 @@ import com.spendly.ui.settings.SettingsScreen
 import com.spendly.ui.settings.categories.CategoryManagementScreen
 import com.spendly.ui.settings.categories.CategoryManagementViewModel
 import com.spendly.ui.settings.categories.categoryManagementViewModelFactory
+import com.spendly.ui.settings.budget.MonthlyBudgetScreen
+import com.spendly.ui.settings.budget.MonthlyBudgetViewModel
+import com.spendly.ui.settings.budget.monthlyBudgetViewModelFactory
 import com.spendly.ui.transactions.TransactionsScreen
 import com.spendly.ui.transactions.TransactionsViewModel
 import com.spendly.ui.transactions.transactionsViewModelFactory
@@ -37,18 +46,43 @@ import com.spendly.ui.transactions.edit.EditTransactionScreen
 import com.spendly.ui.transactions.edit.EditTransactionViewModel
 import com.spendly.ui.transactions.edit.editTransactionViewModelFactory
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpendlyApp() {
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
     Scaffold(
+        topBar = {
+            when (currentRoute) {
+                SpendlyDestination.Dashboard.route -> TopAppBar(
+                    title = { Text(stringResource(R.string.dashboard)) },
+                    actions = {
+                        IconButton(onClick = {
+                            navController.navigate(SpendlyDestination.Settings.route) { launchSingleTop = true }
+                        }) {
+                            Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.settings))
+                        }
+                    },
+                )
+                SpendlyDestination.Settings.route, SpendlyDestination.Review.route -> TopAppBar(
+                    title = {
+                        Text(stringResource(
+                            if (currentRoute == SpendlyDestination.Settings.route) R.string.settings else R.string.review,
+                        ))
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        }
+                    },
+                )
+            }
+        },
         bottomBar = {
-            if (currentRoute != SpendlyRoutes.AddTransaction && currentRoute != SpendlyRoutes.EditTransaction &&
-                currentRoute != SpendlyRoutes.Categories
-            ) {
+            if (SpendlyDestination.bottomNavigation.any { it.route == currentRoute }) {
                 NavigationBar {
-                    SpendlyDestination.entries.forEach { destination ->
+                    SpendlyDestination.bottomNavigation.forEach { destination ->
                         val label = stringResource(destination.labelResId)
                         NavigationBarItem(
                             selected = currentRoute == destination.route,
@@ -91,12 +125,27 @@ fun SpendlyApp() {
                         navController.navigate(SpendlyRoutes.AddTransaction) { launchSingleTop = true }
                     },
                     onOpenTransaction = { id -> navController.navigate(SpendlyRoutes.editTransaction(id)) },
+                    onReviewTransactions = {
+                        navController.navigate(SpendlyDestination.Review.route) { launchSingleTop = true }
+                    },
                 )
             }
             composable(SpendlyDestination.Review.route) { ReviewScreen(innerPadding) }
             composable(SpendlyDestination.Analytics.route) { AnalyticsScreen(innerPadding) }
             composable(SpendlyDestination.Settings.route) {
-                SettingsScreen(innerPadding) { navController.navigate(SpendlyRoutes.Categories) }
+                SettingsScreen(
+                    contentPadding = innerPadding,
+                    onOpenBudget = { navController.navigate(SpendlyRoutes.MonthlyBudget) { launchSingleTop = true } },
+                    onOpenCategories = { navController.navigate(SpendlyRoutes.Categories) { launchSingleTop = true } },
+                )
+            }
+            composable(SpendlyRoutes.MonthlyBudget) { entry ->
+                val application = LocalContext.current.applicationContext as SpendlyApplication
+                val viewModel: MonthlyBudgetViewModel = viewModel(
+                    viewModelStoreOwner = entry,
+                    factory = monthlyBudgetViewModelFactory(application.monthlyBudgetRepository),
+                )
+                MonthlyBudgetScreen(viewModel, innerPadding) { navController.popBackStack() }
             }
             composable(SpendlyRoutes.Categories) { entry ->
                 val application = LocalContext.current.applicationContext as SpendlyApplication

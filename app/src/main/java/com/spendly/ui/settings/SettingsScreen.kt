@@ -19,12 +19,26 @@ import androidx.compose.ui.unit.dp
 import com.spendly.R
 
 @Composable
-fun SettingsScreen(contentPadding: PaddingValues, onOpenCategories: () -> Unit) {
+fun SettingsScreen(
+    contentPadding: PaddingValues,
+    onOpenBudget: () -> Unit,
+    onOpenCategories: () -> Unit,
+) {
     Column(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
         Text(
-            text = stringResource(R.string.settings),
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(24.dp),
+            text = stringResource(R.string.budget_section),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 8.dp),
+        )
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.monthly_spending_limit)) },
+            trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenBudget),
+        )
+        Text(
+            text = stringResource(R.string.categories),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 8.dp),
         )
         ListItem(
             headlineContent = { Text(stringResource(R.string.categories)) },
