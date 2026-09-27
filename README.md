@@ -1,6 +1,6 @@
 # Spendly
 
-Spendly is a local-first Android personal expense tracker. The project currently has an application shell with five navigable placeholder screens, automatic light/dark theming, and a core finance domain model. No financial data is collected or stored yet.
+Spendly is a local-first Android personal expense tracker. The project currently has an application shell with five navigable placeholder screens, automatic light/dark theming, a core finance domain model, and Room-based local persistence. Transaction entry and automatic Google Wallet capture are not implemented yet.
 
 ## Technology
 
@@ -9,6 +9,7 @@ Spendly is a local-first Android personal expense tracker. The project currently
 - Gradle Kotlin DSL and a version catalog
 - A feature-oriented UI structure ready for state-driven screens and coroutines
 - Plain Kotlin domain models for money, transactions, categories, and monthly budgets
+- Room database and repository implementations for local storage
 
 ## Planned capabilities
 
@@ -21,7 +22,7 @@ The following are future plans and are **not implemented yet**:
 - Spending analytics
 - A home-screen budget widget
 
-The intended approach is local-first: expense data will live on the device when those features are added.
+The app stores domain records locally through Room. The current UI does not create or display those records.
 
 ## Build
 
