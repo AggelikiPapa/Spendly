@@ -52,4 +52,18 @@
     <string name="spending_limit">Spending limit</string>
     <string name="current_spending_limit">Current limit:</string>
     <string name="budget_saved">Monthly budget saved.</string>
+    <string name="no_monthly_budget">No monthly budget set</string>
+    <string name="set_budget_prompt">Set a spending limit to start tracking your progress.</string>
+    <string name="set_spending_limit">Set spending limit</string>
+    <string name="spent_amount">%1$s spent</string>
+    <string name="of_budget_limit">of %1$s</string>
+    <string name="budget_used">%1$s used</string>
+    <string name="remaining_amount">%1$s remaining</string>
+    <string name="over_budget_amount">%1$s over budget</string>
+    <string name="limit_exceeded">Limit exceeded</string>
+    <string name="daily_allowance">Daily allowance</string>
+    <string name="amount_per_day">%1$s/day</string>
+    <string name="days_remaining">%1$d days including today</string>
+    <string name="recent_transactions">Recent transactions</string>
+    <string name="see_all">See all</string>
 </resources>

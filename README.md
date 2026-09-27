@@ -1,6 +1,6 @@
 # Spendly
 
-Spendly is a local-first Android personal expense tracker. The project has Room-based local persistence, manual transaction management, category management, and current-month spending-limit configuration. Automatic Google Wallet capture is planned.
+Spendly is a local-first Android personal expense tracker. The project has Room-based local persistence, manual transaction management, category management, and a current-month budget dashboard. Automatic Google Wallet capture is planned.
 
 ## Technology
 
@@ -16,13 +16,13 @@ Spendly is a local-first Android personal expense tracker. The project has Room-
 - Settings-based category management with custom creation, custom renaming, and activation controls
 - Three primary bottom destinations: Dashboard, Transactions, and Analytics; Settings is available from Dashboard and Review from Transactions
 - Current-month EUR spending-limit configuration through Settings
+- Dashboard showing the monthly limit, expense spending, remaining budget, percentage used, daily allowance, and recent transactions
 
 ## Planned capabilities
 
 The following are future plans and are **not implemented yet**:
 
 - Google Wallet notification import
-- Dashboard budget progress and spending calculations
 - Spending alerts
 - Spending analytics
 - A home-screen budget widget
@@ -31,7 +31,7 @@ The app stores transactions locally through Room. The Transactions screen shows 
 
 Settings → Categories shows active and inactive categories. Users can add and rename custom categories, and deactivate or reactivate any category. Built-in category names remain fixed; their built-in status is retained when their active state changes. Inactive categories stay on historical transactions but are omitted from new category choices. Categories cannot be permanently deleted. Category-specific budgets are not implemented.
 
-Settings → Monthly spending limit lets users set or update the current calendar month's EUR limit. The Dashboard does not yet calculate spending against that limit.
+Settings → Monthly spending limit lets users set or update the current calendar month's EUR limit. The Dashboard compares it with current-month expenses, shows remaining budget and a daily allowance, and previews recent transactions. Income and transfers do not consume the spending limit. Budget warnings and automatic Google Wallet tracking are not implemented.
 
 ## Build
 

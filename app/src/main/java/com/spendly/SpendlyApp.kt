@@ -26,6 +26,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.spendly.ui.analytics.AnalyticsScreen
 import com.spendly.ui.dashboard.DashboardScreen
+import com.spendly.ui.dashboard.DashboardViewModel
+import com.spendly.ui.dashboard.dashboardViewModelFactory
 import com.spendly.ui.navigation.SpendlyDestination
 import com.spendly.ui.navigation.SpendlyRoutes
 import com.spendly.ui.review.ReviewScreen
@@ -108,7 +110,31 @@ fun SpendlyApp() {
             startDestination = SpendlyDestination.Dashboard.route,
             modifier = Modifier.fillMaxSize(),
         ) {
-            composable(SpendlyDestination.Dashboard.route) { DashboardScreen(innerPadding) }
+            composable(SpendlyDestination.Dashboard.route) { entry ->
+                val application = LocalContext.current.applicationContext as SpendlyApplication
+                val viewModel: DashboardViewModel = viewModel(
+                    viewModelStoreOwner = entry,
+                    factory = dashboardViewModelFactory(
+                        application.transactionRepository,
+                        application.monthlyBudgetRepository,
+                        application.categoryRepository,
+                    ),
+                )
+                DashboardScreen(
+                    viewModel = viewModel,
+                    contentPadding = innerPadding,
+                    onConfigureBudget = {
+                        navController.navigate(SpendlyRoutes.MonthlyBudget) { launchSingleTop = true }
+                    },
+                    onSeeAllTransactions = {
+                        navController.navigate(SpendlyDestination.Transactions.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                )
+            }
             composable(SpendlyDestination.Transactions.route) { entry ->
                 val application = LocalContext.current.applicationContext as SpendlyApplication
                 val viewModel: TransactionsViewModel = viewModel(
