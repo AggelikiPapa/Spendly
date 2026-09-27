@@ -19,6 +19,16 @@ data class BudgetProgress(
     val percentageUsed: BigDecimal?,
     val daysRemaining: Int,
     val recommendedDailySpend: Money,
+    val spendingPace: SpendingPace,
+)
+
+enum class SpendingPaceStatus { BELOW_PACE, ON_PACE, ABOVE_PACE }
+
+data class SpendingPace(
+    val expectedSpentByToday: Money,
+    /** Actual spending minus expected spending; retains its sign. */
+    val paceDifference: Money,
+    val status: SpendingPaceStatus,
 )
 
 object BudgetProgressCalculator {
@@ -52,6 +62,22 @@ object BudgetProgressCalculator {
         val dailyMinor = if (remaining.amountMinor <= 0L) 0L else BigDecimal.valueOf(remaining.amountMinor)
             .divide(BigDecimal.valueOf(days.toLong()), 0, RoundingMode.HALF_UP).longValueExact()
 
+        val expectedMinor = BigDecimal.valueOf(budget.limit.amountMinor)
+            .multiply(BigDecimal.valueOf(today.dayOfMonth.toLong()))
+            .divide(BigDecimal.valueOf(month.lengthOfMonth().toLong()), 0, RoundingMode.HALF_UP)
+            .longValueExact()
+        val expected = Money(expectedMinor, budget.limit.currencyCode)
+        val difference = spent - expected
+        // Compare whole-cent differences against the exact threshold; 5% need not be a whole cent.
+        val toleranceMinor = BigDecimal.valueOf(expectedMinor).multiply(BigDecimal("0.05"))
+            .max(BigDecimal(500))
+        val status = when {
+            budget.limit.amountMinor == 0L && spent.amountMinor > 0L -> SpendingPaceStatus.ABOVE_PACE
+            BigDecimal.valueOf(difference.amountMinor) > toleranceMinor -> SpendingPaceStatus.ABOVE_PACE
+            BigDecimal.valueOf(difference.amountMinor) < toleranceMinor.negate() -> SpendingPaceStatus.BELOW_PACE
+            else -> SpendingPaceStatus.ON_PACE
+        }
+
         return BudgetProgress(
             budgetLimit = budget.limit,
             spent = spent,
@@ -59,6 +85,7 @@ object BudgetProgressCalculator {
             percentageUsed = percentage,
             daysRemaining = days,
             recommendedDailySpend = Money(dailyMinor, budget.limit.currencyCode),
+            spendingPace = SpendingPace(expected, difference, status),
         )
     }
 }

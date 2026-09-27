@@ -17,6 +17,7 @@ Spendly is a local-first Android personal expense tracker. The project has Room-
 - Three primary bottom destinations: Dashboard, Transactions, and Analytics; Settings is available from Dashboard and Review from Transactions
 - Current-month EUR spending-limit configuration through Settings
 - Dashboard showing the monthly limit, expense spending, remaining budget, percentage used, daily allowance, and recent transactions
+- Spending pace showing expected spending by today, above/on/below-plan status, and the signed difference from plan
 
 ## Planned capabilities
 
@@ -31,7 +32,7 @@ The app stores transactions locally through Room. The Transactions screen shows 
 
 Settings → Categories shows active and inactive categories. Users can add and rename custom categories, and deactivate or reactivate any category. Built-in category names remain fixed; their built-in status is retained when their active state changes. Inactive categories stay on historical transactions but are omitted from new category choices. Categories cannot be permanently deleted. Category-specific budgets are not implemented.
 
-Settings → Monthly spending limit lets users set or update the current calendar month's EUR limit. The Dashboard compares it with current-month expenses, shows remaining budget and a daily allowance, and previews recent transactions. Income and transfers do not consume the spending limit. Budget warnings and automatic Google Wallet tracking are not implemented.
+Settings → Monthly spending limit lets users set or update the current calendar month's EUR limit. The Dashboard compares it with current-month expenses, shows remaining budget and a daily allowance, and previews recent transactions. It also compares actual spending with the expected amount through today, using the larger of 5% of expected spending or €5 as the on-pace tolerance. Income and transfers do not consume the spending limit. Notification-based budget warnings and automatic Google Wallet tracking are not implemented.
 
 ## Build
 

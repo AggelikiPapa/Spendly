@@ -66,4 +66,12 @@
     <string name="days_remaining">%1$d days including today</string>
     <string name="recent_transactions">Recent transactions</string>
     <string name="see_all">See all</string>
+    <string name="spending_pace">Spending pace</string>
+    <string name="above_planned_pace">Above planned pace</string>
+    <string name="below_planned_pace">Below planned pace</string>
+    <string name="on_planned_pace">On pace for this month</string>
+    <string name="expected_by_today">Expected by today: %1$s</string>
+    <string name="actual_spending">Actual spending: %1$s</string>
+    <string name="ahead_of_target">%1$s ahead of today’s target</string>
+    <string name="below_target">%1$s below today’s target</string>
 </resources>

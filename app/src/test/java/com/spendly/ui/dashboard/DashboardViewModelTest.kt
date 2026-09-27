@@ -60,14 +60,20 @@ class DashboardViewModelTest {
         transactions.value.value = listOf(transaction(1, 10_000))
         advanceUntilIdle()
         assertEquals(Money(10_000, "EUR"), (vm.uiState.value as DashboardUiState.Ready).progress?.spent)
+        assertEquals(SpendingPaceStatus.BELOW_PACE,
+            (vm.uiState.value as DashboardUiState.Ready).progress?.spendingPace?.status)
 
         transactions.value.value = listOf(transaction(1, 20_000))
         advanceUntilIdle()
         assertEquals(Money(20_000, "EUR"), (vm.uiState.value as DashboardUiState.Ready).progress?.spent)
+        assertEquals(Money(-53_333, "EUR"),
+            (vm.uiState.value as DashboardUiState.Ready).progress?.spendingPace?.paceDifference)
 
         budgets.value.value = MonthlyBudget(month, Money(50_000, "EUR"))
         advanceUntilIdle()
         assertEquals(Money(30_000, "EUR"), (vm.uiState.value as DashboardUiState.Ready).progress?.remaining)
+        assertEquals(Money(36_667, "EUR"),
+            (vm.uiState.value as DashboardUiState.Ready).progress?.spendingPace?.expectedSpentByToday)
         transactions.value.value = emptyList()
         advanceUntilIdle()
         assertEquals(Money(0, "EUR"), (vm.uiState.value as DashboardUiState.Ready).progress?.spent)

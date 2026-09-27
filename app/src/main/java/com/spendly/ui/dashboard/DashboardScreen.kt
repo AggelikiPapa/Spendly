@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.spendly.R
+import com.spendly.domain.model.Money
 import com.spendly.domain.model.TransactionType
 import com.spendly.ui.transactions.MoneyDisplayFormatter
 import java.math.BigDecimal
@@ -69,6 +70,7 @@ fun DashboardScreen(
                 }
             }
             if (current.progress != null) {
+                item { SpendingPaceCard(current.progress.spendingPace, current.progress.spent) }
                 item { DailyAllowanceCard(current.progress) }
             }
             item {
@@ -85,6 +87,36 @@ fun DashboardScreen(
                 item { Text(stringResource(R.string.no_transactions), modifier = Modifier.padding(horizontal = 24.dp)) }
             } else {
                 items(current.recentTransactions, key = { it.transaction.id }) { row -> RecentTransactionRow(row) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SpendingPaceCard(pace: SpendingPace, actualSpent: Money) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.spending_pace), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(when (pace.status) {
+                SpendingPaceStatus.BELOW_PACE -> R.string.below_planned_pace
+                SpendingPaceStatus.ON_PACE -> R.string.on_planned_pace
+                SpendingPaceStatus.ABOVE_PACE -> R.string.above_planned_pace
+            }))
+            Text(stringResource(
+                R.string.expected_by_today,
+                MoneyDisplayFormatter.formatAmount(pace.expectedSpentByToday),
+            ))
+            Text(stringResource(R.string.actual_spending, MoneyDisplayFormatter.formatAmount(actualSpent)))
+            when (pace.status) {
+                SpendingPaceStatus.ABOVE_PACE -> Text(stringResource(
+                    R.string.ahead_of_target,
+                    MoneyDisplayFormatter.formatAmount(pace.paceDifference),
+                ))
+                SpendingPaceStatus.BELOW_PACE -> Text(stringResource(
+                    R.string.below_target,
+                    MoneyDisplayFormatter.formatAmount(pace.paceDifference),
+                ))
+                SpendingPaceStatus.ON_PACE -> Unit
             }
         }
     }
