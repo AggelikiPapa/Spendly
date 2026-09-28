@@ -4,13 +4,22 @@ import android.app.Notification
 import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import com.spendly.SpendlyApplication
 import com.spendly.wallet.capture.WalletNotificationCapturePipeline
 import com.spendly.wallet.capture.WalletNotificationTextFields
+import com.spendly.wallet.importer.WalletTransactionImportCoordinator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 
-/** Adapts posted Wallet notifications for the in-memory parser. */
+/** Adapts posted Wallet notifications and queues their imports outside the system callback. */
 class SpendlyNotificationListenerService : NotificationListenerService() {
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val capturePipeline by lazy {
-        WalletNotificationCapturePipeline(BuildVariantWalletNotificationCaptureHandler())
+        val repository = (application as SpendlyApplication).transactionRepository
+        val coordinator = WalletTransactionImportCoordinator(repository)
+        WalletNotificationCapturePipeline(BuildVariantWalletNotificationCaptureHandler(coordinator, serviceScope))
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -24,6 +33,11 @@ class SpendlyNotificationListenerService : NotificationListenerService() {
                 bigText = extras.safeText(Notification.EXTRA_BIG_TEXT),
             )
         }
+    }
+
+    override fun onDestroy() {
+        serviceScope.cancel()
+        super.onDestroy()
     }
 }
 

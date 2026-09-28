@@ -1,6 +1,6 @@
 # Spendly
 
-Spendly is a local-first Android personal expense tracker. The project has Room-based local persistence, manual transaction management, category management, and a current-month budget dashboard. It can detect Google Wallet notifications and parse observed purchase notifications in memory; transaction import is planned.
+Spendly is a local-first Android personal expense tracker. The project has Room-based local persistence, manual transaction management, category management, and a current-month budget dashboard. It can detect Google Wallet notifications, parse purchase notifications, and automatically import successful purchases as expense transactions.
 
 ## Technology
 
@@ -18,13 +18,13 @@ Spendly is a local-first Android personal expense tracker. The project has Room-
 - Current-month EUR spending-limit configuration through Settings
 - Dashboard showing the monthly limit, expense spending, remaining budget, percentage used, daily allowance, and recent transactions
 - Spending pace showing expected spending by today, above/on/below-plan status, and the signed difference from plan
-- Notification-listener access, in-memory capture, and purchase parsing for Google Wallet notifications
+- Notification-listener access, purchase parsing, and automatic Google Wallet expense import
 
 ## Planned capabilities
 
 The following are future plans and are **not implemented yet**:
 
-- Google Wallet transaction import
+- Google Wallet duplicate detection and review workflow
 - Spending alerts
 - Spending analytics
 - A home-screen budget widget
@@ -33,9 +33,9 @@ The app stores transactions locally through Room. The Transactions screen shows 
 
 Settings → Categories shows active and inactive categories. Users can add and rename custom categories, and deactivate or reactivate any category. Built-in category names remain fixed; their built-in status is retained when their active state changes. Inactive categories stay on historical transactions but are omitted from new category choices. Categories cannot be permanently deleted. Category-specific budgets are not implemented.
 
-Settings → Monthly spending limit lets users set or update the current calendar month's EUR limit. The Dashboard compares it with current-month expenses, shows remaining budget and a daily allowance, and previews recent transactions. It also compares actual spending with the expected amount through today, using the larger of 5% of expected spending or €5 as the on-pace tolerance. Income and transfers do not consume the spending limit. Notification-based budget warnings and automatic Google Wallet tracking are not implemented.
+Settings → Monthly spending limit lets users set or update the current calendar month's EUR limit. The Dashboard compares it with current-month expenses, shows remaining budget and a daily allowance, and previews recent transactions. It also compares actual spending with the expected amount through today, using the larger of 5% of expected spending or €5 as the on-pace tolerance. Income and transfers do not consume the spending limit. Notification-based budget warnings are not implemented.
 
-Settings > Google Wallet tracking shows whether Android notification-listener access is enabled and opens the system settings where the user can grant or revoke it. The listener accepts notifications from `com.google.android.apps.walletnfcrel`, extracts available text fields into an in-memory capture, and ignores other packages. A pure parser recognizes a leading EUR amount, a merchant in the title, and optional payment-method and masked-card details. It is based on an observed NFC purchase notification: `GPK MARKET IKE` / `€2.95 with Ticket Restaurant® ••5311`. Other formats are classified conservatively as needing review or not a purchase. Debug builds log raw fields and parse results under `SpendlyWalletCapture`; release builds do not log purchase details. Parsed purchases are not persisted or imported as Spendly transactions yet.
+Settings > Google Wallet tracking shows whether Android notification-listener access is enabled and opens the system settings where the user can grant or revoke it. The listener accepts notifications from `com.google.android.apps.walletnfcrel`, extracts available text fields, and ignores other packages. A parser based on an observed NFC purchase notification (`GPK MARKET IKE` / `€2.95 with Ticket Restaurant® ••5311`) recognizes a leading EUR amount and merchant. Successfully parsed purchases are inserted automatically as confirmed expenses without a category; they appear in transaction history and count toward Dashboard spending. Purchase-like notifications with a valid amount but uncertain details are stored as needing review for a later workflow. Non-purchase notifications and results without a valid amount are not stored. Debug builds log capture, parse, and import outcomes under `SpendlyWalletCapture`; release builds do not log purchase details. Duplicate detection is not implemented yet, so repeated notification delivery may create duplicate transactions.
 
 ## Build
 
