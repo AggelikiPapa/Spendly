@@ -2,8 +2,13 @@ package com.spendly.wallet.listener
 
 import com.spendly.wallet.capture.CapturedWalletNotification
 import com.spendly.wallet.capture.WalletNotificationCaptureHandler
+import com.spendly.wallet.parser.GoogleWalletNotificationParser
 
-/** Raw notification fields never enter release logs. */
+/** Parse in memory without release logging or persistence. */
 class BuildVariantWalletNotificationCaptureHandler : WalletNotificationCaptureHandler {
-    override fun handle(notification: CapturedWalletNotification) = Unit
+    private val parser = GoogleWalletNotificationParser()
+
+    override fun handle(notification: CapturedWalletNotification) {
+        parser.parse(notification)
+    }
 }

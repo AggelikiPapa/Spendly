@@ -7,7 +7,7 @@ import android.service.notification.StatusBarNotification
 import com.spendly.wallet.capture.WalletNotificationCapturePipeline
 import com.spendly.wallet.capture.WalletNotificationTextFields
 
-/** Adapts posted Wallet notifications; parsing and persistence belong to later tickets. */
+/** Adapts posted Wallet notifications for the in-memory parser. */
 class SpendlyNotificationListenerService : NotificationListenerService() {
     private val capturePipeline by lazy {
         WalletNotificationCapturePipeline(BuildVariantWalletNotificationCaptureHandler())

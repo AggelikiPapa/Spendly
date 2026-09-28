@@ -1,6 +1,6 @@
 package com.spendly.wallet.capture
 
-/** Android-free data for a later parser; never persisted by the capture pipeline. */
+/** Android-free data for the parser; never persisted by the capture pipeline. */
 data class CapturedWalletNotification(
     val packageName: String,
     val notificationKey: String?,
