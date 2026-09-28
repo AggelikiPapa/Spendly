@@ -59,7 +59,7 @@ fun TransactionsScreen(
         }
 
         TextButton(onClick = onReviewTransactions, modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)) {
-            Text(stringResource(R.string.needs_review))
+            Text(if (state.reviewCount > 0) stringResource(R.string.needs_review_count, state.reviewCount) else stringResource(R.string.needs_review))
         }
 
         when {

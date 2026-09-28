@@ -89,6 +89,21 @@ class DashboardViewModelTest {
         assertEquals(0, transactions.getByIdCalls)
     }
 
+    @Test fun reviewAndIgnoredWalletImportsStayOutOfRecentAndBudget() = runTest {
+        budgets.value.value = MonthlyBudget(month, Money(10_000, "EUR"))
+        val confirmed = transaction(1, 295).copy(source = TransactionSource.GOOGLE_WALLET)
+        transactions.value.value = listOf(
+            confirmed,
+            transaction(2, 400).copy(source = TransactionSource.GOOGLE_WALLET, importStatus = ImportStatus.NEEDS_REVIEW),
+            transaction(3, 600).copy(source = TransactionSource.GOOGLE_WALLET, importStatus = ImportStatus.IGNORED),
+        )
+        val vm = newViewModel()
+        advanceUntilIdle()
+        val state = vm.uiState.value as DashboardUiState.Ready
+        assertEquals(listOf(1L), state.recentTransactions.map { it.transaction.id })
+        assertEquals(Money(295, "EUR"), state.progress?.spent)
+    }
+
     @Test fun incompatibleExpenseCurrencyShowsSafeError() = runTest {
         budgets.value.value = MonthlyBudget(month, Money(100_000, "EUR"))
         transactions.value.value = listOf(transaction(1, 100).copy(amount = Money(100, "USD")))

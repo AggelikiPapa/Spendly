@@ -31,6 +31,11 @@ import com.spendly.ui.dashboard.dashboardViewModelFactory
 import com.spendly.ui.navigation.SpendlyDestination
 import com.spendly.ui.navigation.SpendlyRoutes
 import com.spendly.ui.review.ReviewScreen
+import com.spendly.ui.review.ReviewTransactionScreen
+import com.spendly.ui.review.ReviewTransactionViewModel
+import com.spendly.ui.review.ReviewViewModel
+import com.spendly.ui.review.reviewTransactionViewModelFactory
+import com.spendly.ui.review.reviewViewModelFactory
 import com.spendly.ui.settings.SettingsScreen
 import com.spendly.ui.settings.categories.CategoryManagementScreen
 import com.spendly.ui.settings.categories.CategoryManagementViewModel
@@ -70,10 +75,14 @@ fun SpendlyApp() {
                         }
                     },
                 )
-                SpendlyDestination.Settings.route, SpendlyDestination.Review.route -> TopAppBar(
+                SpendlyDestination.Settings.route, SpendlyDestination.Review.route, SpendlyRoutes.ReviewTransaction -> TopAppBar(
                     title = {
                         Text(stringResource(
-                            if (currentRoute == SpendlyDestination.Settings.route) R.string.settings else R.string.review,
+                            when (currentRoute) {
+                                SpendlyDestination.Settings.route -> R.string.settings
+                                SpendlyRoutes.ReviewTransaction -> R.string.review_transaction
+                                else -> R.string.review
+                            },
                         ))
                     },
                     navigationIcon = {
@@ -159,7 +168,26 @@ fun SpendlyApp() {
                     },
                 )
             }
-            composable(SpendlyDestination.Review.route) { ReviewScreen(innerPadding) }
+            composable(SpendlyDestination.Review.route) { entry ->
+                val application = LocalContext.current.applicationContext as SpendlyApplication
+                val viewModel: ReviewViewModel = viewModel(
+                    viewModelStoreOwner = entry,
+                    factory = reviewViewModelFactory(application.transactionRepository, application.categoryRepository),
+                )
+                ReviewScreen(viewModel, innerPadding) { id -> navController.navigate(SpendlyRoutes.reviewTransaction(id)) }
+            }
+            composable(
+                route = SpendlyRoutes.ReviewTransaction,
+                arguments = listOf(navArgument(SpendlyRoutes.TransactionId) { type = NavType.LongType }),
+            ) { entry ->
+                val application = LocalContext.current.applicationContext as SpendlyApplication
+                val id = requireNotNull(entry.arguments?.getLong(SpendlyRoutes.TransactionId))
+                val viewModel: ReviewTransactionViewModel = viewModel(
+                    viewModelStoreOwner = entry,
+                    factory = reviewTransactionViewModelFactory(id, application.transactionRepository, application.categoryRepository),
+                )
+                ReviewTransactionScreen(viewModel, innerPadding) { navController.popBackStack() }
+            }
             composable(SpendlyDestination.Analytics.route) { AnalyticsScreen(innerPadding) }
             composable(SpendlyDestination.Settings.route) { entry ->
                 val application = LocalContext.current.applicationContext as SpendlyApplication

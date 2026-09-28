@@ -67,6 +67,28 @@ class TransactionsViewModelTest {
         assertEquals(0, transactions.getByIdCalls)
     }
 
+    @Test fun confirmedHistoryExcludesReviewAndIgnoredWhileCountTracksWalletReview() = runTest {
+        val manual = transaction(1, "2026-09-01T10:00:00Z", 1)
+        val wallet = transaction(2, "2026-09-02T10:00:00Z", 1).copy(source = TransactionSource.GOOGLE_WALLET)
+        transactions.items.value = listOf(
+            manual, wallet,
+            wallet.copy(id = 3, importStatus = ImportStatus.NEEDS_REVIEW),
+            wallet.copy(id = 4, importStatus = ImportStatus.IGNORED),
+            manual.copy(id = 5, importStatus = ImportStatus.NEEDS_REVIEW),
+        )
+        val vm = TransactionsViewModel(transactions, categories)
+        advanceUntilIdle()
+        assertEquals(listOf(2L, 1L), vm.uiState.value.rows.map { it.transaction.id })
+        assertEquals(1, vm.uiState.value.reviewCount)
+
+        transactions.items.value = transactions.items.value.map {
+            if (it.id == 3L) it.copy(importStatus = ImportStatus.CONFIRMED) else it
+        }
+        advanceUntilIdle()
+        assertEquals(0, vm.uiState.value.reviewCount)
+        assertEquals(listOf(3L, 2L, 1L), vm.uiState.value.rows.map { it.transaction.id })
+    }
+
     @Test fun amountDisplayUsesTypePrefixAndMinorUnits() {
         val base = transaction(1, "2026-09-01T10:00:00Z", 1)
         assertEquals("-€12.40", MoneyDisplayFormatter.format(base, Locale.US))

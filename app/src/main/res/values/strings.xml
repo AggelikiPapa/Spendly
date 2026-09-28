@@ -7,7 +7,15 @@
     <string name="settings">Settings</string>
     <string name="dashboard_placeholder">Your monthly spending overview will appear here.</string>
     <string name="transactions_placeholder">Your transactions will appear here.</string>
-    <string name="review_placeholder">Transactions requiring review will appear here.</string>
+    <string name="no_review_transactions">No transactions need review.</string>
+    <string name="unknown_merchant">Unknown merchant</string>
+    <string name="needs_review_count">Needs review (%1$d)</string>
+    <string name="review_transaction">Review transaction</string>
+    <string name="confirm">Confirm</string>
+    <string name="ignore">Ignore</string>
+    <string name="confirm_ignore_transaction">Ignore this Wallet transaction? It will be kept for traceability but excluded from spending.</string>
+    <string name="notes_optional">Notes (optional)</string>
+    <string name="original_wallet_notification">Original Wallet notification</string>
     <string name="analytics_placeholder">Your spending analytics will appear here.</string>
     <string name="settings_placeholder">Manage your Spendly preferences here.</string>
     <string name="add_transaction">Add transaction</string>
@@ -76,8 +84,8 @@
     <string name="below_target">%1$s below today’s target</string>
     <string name="automatic_transaction_tracking">Automatic transaction tracking</string>
     <string name="google_wallet_tracking">Google Wallet tracking</string>
-    <string name="wallet_tracking_settings_summary">Set up notification access for future tracking</string>
-    <string name="wallet_tracking_future_description">Spendly will later use eligible Google Wallet purchase notifications to detect transactions. Automatic importing is not available yet.</string>
+    <string name="wallet_tracking_settings_summary">Manage notification access for Wallet imports</string>
+    <string name="wallet_tracking_future_description">Eligible Google Wallet purchases are imported automatically. Uncertain purchases appear in Review.</string>
     <string name="notification_access">Notification access</string>
     <string name="notification_access_enabled">Status: Enabled</string>
     <string name="notification_access_required">Status: Permission required</string>

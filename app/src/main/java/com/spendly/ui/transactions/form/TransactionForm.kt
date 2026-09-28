@@ -50,6 +50,8 @@ fun TransactionForm(
     onCategorySelected: (Long?) -> Unit,
     onMerchantChanged: (String) -> Unit,
     onDateSelected: (LocalDate) -> Unit,
+    showTransactionType: Boolean = true,
+    allowUncategorizedExpense: Boolean = false,
 ) {
     var categoryMenuExpanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -72,7 +74,7 @@ fun TransactionForm(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (showTransactionType) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.transaction_type), style = MaterialTheme.typography.titleMedium)
             val types = TransactionType.entries
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
@@ -115,7 +117,7 @@ fun TransactionForm(
                     expanded = categoryMenuExpanded,
                     onDismissRequest = { categoryMenuExpanded = false },
                 ) {
-                    if (values.transactionType != TransactionType.EXPENSE) {
+                    if (values.transactionType != TransactionType.EXPENSE || allowUncategorizedExpense) {
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.no_category)) },
                             onClick = {

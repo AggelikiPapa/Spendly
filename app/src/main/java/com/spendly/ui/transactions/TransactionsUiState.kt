@@ -6,6 +6,7 @@ data class TransactionRow(val transaction: Transaction, val categoryName: String
 
 data class TransactionsUiState(
     val rows: List<TransactionRow> = emptyList(),
+    val reviewCount: Int = 0,
     val isLoading: Boolean = true,
     val error: String? = null,
 )

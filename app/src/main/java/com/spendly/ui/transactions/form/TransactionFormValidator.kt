@@ -21,10 +21,11 @@ object TransactionFormValidator {
         type: TransactionType,
         categoryId: Long?,
         categories: List<Category>,
+        requireExpenseCategory: Boolean = true,
     ): TransactionFormValidation {
         val amount = MoneyInputParser.parsePositive(amountInput, currencyCode, fractionDigits)
         val categoryValid = type != TransactionType.EXPENSE ||
-            categories.any { it.id == categoryId }
+            (categoryId == null && !requireExpenseCategory) || categories.any { it.id == categoryId }
         return TransactionFormValidation(
             amount = amount,
             amountError = if (amount == null) "Enter an amount greater than zero with valid decimal places." else null,

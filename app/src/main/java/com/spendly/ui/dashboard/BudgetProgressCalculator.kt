@@ -3,6 +3,7 @@ package com.spendly.ui.dashboard
 import com.spendly.domain.model.Money
 import com.spendly.domain.model.MonthlyBudget
 import com.spendly.domain.model.Transaction
+import com.spendly.domain.model.TransactionVisibility
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
@@ -46,7 +47,7 @@ object BudgetProgressCalculator {
         val start: Instant = month.atDay(1).atStartOfDay(zone).toInstant()
         val end: Instant = month.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant()
         val spent = transactions.asSequence()
-            .filter { it.type.countsTowardMonthlyBudget && it.occurredAt >= start && it.occurredAt < end }
+            .filter { TransactionVisibility.inHistory(it) && it.type.countsTowardMonthlyBudget && it.occurredAt >= start && it.occurredAt < end }
             .fold(Money(0, budget.limit.currencyCode)) { total, transaction ->
                 require(transaction.amount.amountMinor >= 0) { "Negative expense amount" }
                 total + transaction.amount

@@ -3,6 +3,7 @@ package com.spendly.ui.transactions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.spendly.domain.model.Transaction
+import com.spendly.domain.model.TransactionVisibility
 import com.spendly.domain.repository.CategoryRepository
 import com.spendly.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,13 +23,19 @@ class TransactionsViewModel(
         viewModelScope.launch {
             combine(transactions.observeAll(), categories.observeAll()) { allTransactions, allCategories ->
                 val categoryNames = allCategories.associate { it.id to it.name }
-                allTransactions
+                val rows = allTransactions
+                    .filter(TransactionVisibility::inHistory)
                     .sortedWith(compareByDescending<Transaction> { it.occurredAt }.thenByDescending { it.id })
                     .map { TransactionRow(it, it.categoryId?.let(categoryNames::get)) }
+                TransactionsUiState(
+                    rows = rows,
+                    reviewCount = allTransactions.count(TransactionVisibility::needsWalletReview),
+                    isLoading = false,
+                )
             }.catch {
                 mutableUiState.value = TransactionsUiState(isLoading = false, error = "Transactions could not be loaded.")
-            }.collect { rows ->
-                mutableUiState.value = TransactionsUiState(rows = rows, isLoading = false)
+            }.collect { state ->
+                mutableUiState.value = state
             }
         }
     }

@@ -3,6 +3,7 @@ package com.spendly.ui.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.spendly.domain.model.Transaction
+import com.spendly.domain.model.TransactionVisibility
 import com.spendly.domain.repository.CategoryRepository
 import com.spendly.domain.repository.MonthlyBudgetRepository
 import com.spendly.domain.repository.TransactionRepository
@@ -34,12 +35,13 @@ class DashboardViewModel(
                 categories.observeAll(),
             ) { allTransactions, budget, allCategories ->
                 val names = allCategories.associate { it.id to it.name }
-                val recent = allTransactions
+                val confirmed = allTransactions.filter(TransactionVisibility::inHistory)
+                val recent = confirmed
                     .sortedWith(compareByDescending<Transaction> { it.occurredAt }.thenByDescending { it.id })
                     .take(5)
                     .map { DashboardTransactionRow(it, it.categoryId?.let(names::get)) }
                 val progress = budget?.let {
-                    BudgetProgressCalculator.calculate(it, allTransactions, month, LocalDate.now(clock), clock.zone)
+                    BudgetProgressCalculator.calculate(it, confirmed, month, LocalDate.now(clock), clock.zone)
                 }
                 DashboardUiState.Ready(month, progress, recent)
             }.catch { error ->

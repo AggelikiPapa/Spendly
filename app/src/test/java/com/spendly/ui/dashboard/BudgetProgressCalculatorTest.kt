@@ -35,6 +35,16 @@ class BudgetProgressCalculatorTest {
         assertEquals(Money(85_000, "EUR"), result.remaining)
     }
 
+    @Test fun onlyConfirmedWalletExpensesConsumeBudget() {
+        val confirmed = transaction(1, 295, TransactionType.EXPENSE)
+            .copy(source = TransactionSource.GOOGLE_WALLET)
+        val review = transaction(2, 400, TransactionType.EXPENSE)
+            .copy(source = TransactionSource.GOOGLE_WALLET, importStatus = ImportStatus.NEEDS_REVIEW)
+        val ignored = transaction(3, 600, TransactionType.EXPENSE)
+            .copy(source = TransactionSource.GOOGLE_WALLET, importStatus = ImportStatus.IGNORED)
+        assertEquals(Money(295, "EUR"), calculate(10_000, listOf(confirmed, review, ignored)).spent)
+    }
+
     @Test fun remainingPercentageAndDailyAllowanceUseMinorUnits() {
         val result = calculate(100_000, listOf(transaction(1, 68_420, TransactionType.EXPENSE)))
         assertEquals(Money(31_580, "EUR"), result.remaining)
