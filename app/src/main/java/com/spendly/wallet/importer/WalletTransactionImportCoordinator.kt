@@ -6,6 +6,8 @@ import com.spendly.domain.model.Transaction
 import com.spendly.domain.model.TransactionSource
 import com.spendly.domain.model.TransactionType
 import com.spendly.domain.repository.TransactionRepository
+import com.spendly.domain.repository.CategoryRepository
+import com.spendly.domain.repository.MerchantCategoryRuleRepository
 import com.spendly.wallet.capture.CapturedWalletNotification
 import com.spendly.wallet.parser.GoogleWalletNotificationParser
 import com.spendly.wallet.parser.WalletParseResult
@@ -33,10 +35,13 @@ data class WalletImportResult(
 /** Maps parsed Wallet purchases to the repository, serializing duplicate checks with inserts. */
 class WalletTransactionImportCoordinator(
     private val transactions: TransactionRepository,
+    rules: MerchantCategoryRuleRepository,
+    categories: CategoryRepository,
     private val parser: GoogleWalletNotificationParser = GoogleWalletNotificationParser(),
     private val clock: Clock = Clock.systemUTC(),
 ) {
     private val duplicateDetector = WalletDuplicateDetector(transactions)
+    private val categoryMatcher = MerchantCategoryMatcher(rules, categories)
     private val importMutex = Mutex()
 
     suspend fun import(notification: CapturedWalletNotification): WalletImportResult {
@@ -85,7 +90,8 @@ class WalletTransactionImportCoordinator(
         importMutex.withLock {
             when (duplicateDetector.check(candidate)) {
                 DuplicateCheckResult.UNIQUE -> {
-                    transactions.insert(candidate)
+                    val categoryId = categoryMatcher.categoryIdFor(candidate.merchant)
+                    transactions.insert(candidate.copy(categoryId = categoryId))
                     importedOutcome
                 }
                 DuplicateCheckResult.DUPLICATE_BY_EXTERNAL_REFERENCE -> WalletImportOutcome.SKIPPED_DUPLICATE_REFERENCE

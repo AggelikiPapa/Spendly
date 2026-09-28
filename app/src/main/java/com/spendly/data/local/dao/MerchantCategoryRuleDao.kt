@@ -22,5 +22,8 @@ interface MerchantCategoryRuleDao {
     suspend fun getById(id: Long): MerchantCategoryRuleEntity?
 
     @Query("SELECT * FROM merchant_category_rules ORDER BY id")
+    suspend fun getAll(): List<MerchantCategoryRuleEntity>
+
+    @Query("SELECT * FROM merchant_category_rules ORDER BY id")
     fun observeAll(): Flow<List<MerchantCategoryRuleEntity>>
 }

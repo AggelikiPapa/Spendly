@@ -13,5 +13,6 @@ class RoomMerchantCategoryRuleRepository(private val dao: MerchantCategoryRuleDa
     override suspend fun update(rule: MerchantCategoryRule) = dao.update(rule.toEntity())
     override suspend fun deleteById(id: Long) = dao.deleteById(id)
     override suspend fun getById(id: Long) = dao.getById(id)?.toDomain()
+    override suspend fun getAll() = dao.getAll().map { it.toDomain() }
     override fun observeAll() = dao.observeAll().map { rows -> rows.map { it.toDomain() } }
 }

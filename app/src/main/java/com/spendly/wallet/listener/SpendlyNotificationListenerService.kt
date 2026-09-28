@@ -17,8 +17,12 @@ import kotlinx.coroutines.cancel
 class SpendlyNotificationListenerService : NotificationListenerService() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val capturePipeline by lazy {
-        val repository = (application as SpendlyApplication).transactionRepository
-        val coordinator = WalletTransactionImportCoordinator(repository)
+        val spendly = application as SpendlyApplication
+        val coordinator = WalletTransactionImportCoordinator(
+            spendly.transactionRepository,
+            spendly.merchantCategoryRuleRepository,
+            spendly.categoryRepository,
+        )
         WalletNotificationCapturePipeline(BuildVariantWalletNotificationCaptureHandler(coordinator, serviceScope))
     }
 

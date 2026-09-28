@@ -179,7 +179,10 @@ class SpendlyDatabaseTest {
         assertEquals(MerchantCategoryRule(id, "Market", categoryId), repository.getById(id))
         assertEquals(1, repository.update(MerchantCategoryRule(id, "Shop", categoryId)))
         assertEquals("Shop", repository.observeAll().first().single().merchantPattern)
+        val secondId = repository.insert(MerchantCategoryRule(0, "Other Shop", categoryId))
+        assertEquals(listOf(id, secondId), repository.getAll().map { it.id })
         assertEquals(1, repository.deleteById(id))
+        assertEquals(1, repository.deleteById(secondId))
         assertNull(repository.getById(id))
     }
 

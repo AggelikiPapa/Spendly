@@ -1,12 +1,16 @@
 package com.spendly.wallet.importer
 
 import com.spendly.domain.model.ImportStatus
+import com.spendly.domain.model.Category
+import com.spendly.domain.model.MerchantCategoryRule
 import com.spendly.domain.model.Money
 import com.spendly.domain.model.MonthlyBudget
 import com.spendly.domain.model.Transaction
 import com.spendly.domain.model.TransactionSource
 import com.spendly.domain.model.TransactionType
 import com.spendly.domain.repository.TransactionRepository
+import com.spendly.domain.repository.CategoryRepository
+import com.spendly.domain.repository.MerchantCategoryRuleRepository
 import com.spendly.ui.dashboard.BudgetProgressCalculator
 import com.spendly.wallet.capture.CapturedWalletNotification
 import com.spendly.wallet.capture.SupportedWalletPackages
@@ -23,6 +27,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -33,8 +38,12 @@ class WalletTransactionImportCoordinatorTest {
     private val importTime = Instant.parse("2026-09-15T12:00:00Z")
     private val purchaseTime = Instant.parse("2026-09-14T10:30:00Z")
     private val repository = FakeTransactionRepository()
+    private val rules = FakeRules()
+    private val categories = FakeCategories()
     private val coordinator = WalletTransactionImportCoordinator(
         repository,
+        rules,
+        categories,
         clock = Clock.fixed(importTime, ZoneOffset.UTC),
     )
 
@@ -94,6 +103,24 @@ class WalletTransactionImportCoordinatorTest {
         assertEquals(Money(295, "EUR"), progress.spent)
     }
 
+    @Test fun confirmedImportUsesExistingRuleBeforeInsertion() = runTest {
+        rules.items = listOf(MerchantCategoryRule(1, "  gpk   market ike ", 7))
+        categories.items = listOf(Category(7, "Groceries", false, true))
+
+        assertEquals(WalletImportOutcome.IMPORTED, coordinator.import(notification()).outcome)
+        assertEquals(7L, repository.inserted.single().categoryId)
+        assertEquals(ImportStatus.CONFIRMED, repository.inserted.single().importStatus)
+    }
+
+    @Test fun reviewableImportCanReceiveCategoryWithoutChangingStatus() = runTest {
+        rules.items = listOf(MerchantCategoryRule(1, "GPK MARKET IKE", 7))
+        categories.items = listOf(Category(7, "Groceries", false, true))
+
+        assertEquals(WalletImportOutcome.STORED_FOR_REVIEW, coordinator.import(notification(text = "€2.95 with Visa ••123")).outcome)
+        assertEquals(7L, repository.inserted.single().categoryId)
+        assertEquals(ImportStatus.NEEDS_REVIEW, repository.inserted.single().importStatus)
+    }
+
     @Test fun notPurchaseNeverInserts() = runTest {
         val result = coordinator.import(notification(text = "Your pass is ready"))
 
@@ -149,12 +176,15 @@ class WalletTransactionImportCoordinatorTest {
     }
 
     @Test fun repeatedDeliveryIsSkippedByReference() = runTest {
+        rules.items = listOf(MerchantCategoryRule(1, "GPK MARKET IKE", 7))
+        categories.items = listOf(Category(7, "Groceries", false, true))
         val capture = notification()
         assertEquals(WalletImportOutcome.IMPORTED, coordinator.import(capture).outcome)
         assertEquals(WalletImportOutcome.SKIPPED_DUPLICATE_REFERENCE, coordinator.import(capture).outcome)
 
         assertEquals(1, repository.insertCalls)
         assertEquals(1, repository.observeAll().first().size)
+        assertEquals(1, rules.getAllCalls)
     }
 
     @Test fun reviewableRedeliveryIsAlsoSkipped() = runTest {
@@ -173,6 +203,12 @@ class WalletTransactionImportCoordinatorTest {
 
     @Test fun lookupFailureDoesNotInsertOrCrash() = runTest {
         repository.failLookup = true
+        assertEquals(WalletImportOutcome.FAILED, coordinator.import(notification()).outcome)
+        assertEquals(0, repository.insertCalls)
+    }
+
+    @Test fun ruleRepositoryFailureDoesNotInsertOrCrash() = runTest {
+        rules.failRead = true
         assertEquals(WalletImportOutcome.FAILED, coordinator.import(notification()).outcome)
         assertEquals(0, repository.insertCalls)
     }
@@ -232,5 +268,30 @@ class WalletTransactionImportCoordinatorTest {
         override fun observeAll(): Flow<List<Transaction>> = rows
         override fun observeInRange(startInclusive: Instant, endExclusive: Instant): Flow<List<Transaction>> =
             rows.map { list -> list.filter { it.occurredAt >= startInclusive && it.occurredAt < endExclusive } }
+    }
+
+    private class FakeRules : MerchantCategoryRuleRepository {
+        var items = emptyList<MerchantCategoryRule>()
+        var getAllCalls = 0
+        var failRead = false
+        override suspend fun getAll(): List<MerchantCategoryRule> {
+            getAllCalls++
+            if (failRead) error("Simulated rule lookup failure")
+            return items
+        }
+        override suspend fun insert(rule: MerchantCategoryRule): Long = error("Unused")
+        override suspend fun update(rule: MerchantCategoryRule): Int = error("Unused")
+        override suspend fun deleteById(id: Long): Int = error("Unused")
+        override suspend fun getById(id: Long): MerchantCategoryRule? = error("Unused")
+        override fun observeAll(): Flow<List<MerchantCategoryRule>> = emptyFlow()
+    }
+
+    private class FakeCategories : CategoryRepository {
+        var items = emptyList<Category>()
+        override suspend fun getById(id: Long): Category? = items.firstOrNull { it.id == id }
+        override suspend fun insert(category: Category): Long = error("Unused")
+        override suspend fun update(category: Category): Int = error("Unused")
+        override fun observeAll(): Flow<List<Category>> = emptyFlow()
+        override fun observeActive(): Flow<List<Category>> = emptyFlow()
     }
 }

@@ -8,5 +8,6 @@ interface MerchantCategoryRuleRepository {
     suspend fun update(rule: MerchantCategoryRule): Int
     suspend fun deleteById(id: Long): Int
     suspend fun getById(id: Long): MerchantCategoryRule?
+    suspend fun getAll(): List<MerchantCategoryRule>
     fun observeAll(): Flow<List<MerchantCategoryRule>>
 }

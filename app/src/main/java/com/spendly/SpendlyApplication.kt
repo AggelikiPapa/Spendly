@@ -4,9 +4,11 @@ import android.app.Application
 import com.spendly.data.local.database.SpendlyDatabaseProvider
 import com.spendly.data.repository.RoomCategoryRepository
 import com.spendly.data.repository.RoomMonthlyBudgetRepository
+import com.spendly.data.repository.RoomMerchantCategoryRuleRepository
 import com.spendly.data.repository.RoomTransactionRepository
 import com.spendly.domain.repository.CategoryRepository
 import com.spendly.domain.repository.MonthlyBudgetRepository
+import com.spendly.domain.repository.MerchantCategoryRuleRepository
 import com.spendly.domain.repository.TransactionRepository
 import com.spendly.wallet.listener.NotificationAccessGateway
 import com.spendly.wallet.listener.NotificationAccessManager
@@ -20,6 +22,10 @@ class SpendlyApplication : Application() {
 
     val categoryRepository: CategoryRepository by lazy {
         RoomCategoryRepository(database.categoryDao())
+    }
+
+    val merchantCategoryRuleRepository: MerchantCategoryRuleRepository by lazy {
+        RoomMerchantCategoryRuleRepository(database.merchantCategoryRuleDao())
     }
 
     val monthlyBudgetRepository: MonthlyBudgetRepository by lazy {
