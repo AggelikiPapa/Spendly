@@ -91,4 +91,16 @@
     <string name="notification_access_required">Status: Permission required</string>
     <string name="grant_notification_access">Grant notification access</string>
     <string name="wallet_tracking_privacy">Notification processing will happen locally on this device. Spendly will not upload notification contents.</string>
+    <string name="remember_merchant">Remember this merchant for future purchases</string>
+    <string name="automation">Automation</string>
+    <string name="merchant_rules">Merchant rules</string>
+    <string name="merchant_rules_summary">Manage automatic Wallet categories</string>
+    <string name="no_merchant_rules">No merchant rules yet.</string>
+    <string name="no_merchant_rules_hint">Categorize a Google Wallet purchase and choose to remember the merchant.</string>
+    <string name="category_inactive">%1$s (Inactive)</string>
+    <string name="category_unavailable">Category unavailable</string>
+    <string name="change_rule_category">Change rule category</string>
+    <string name="delete_merchant_rule">Delete merchant rule?</string>
+    <string name="delete_merchant_rule_message">Future purchases from this merchant will no longer be categorized automatically.</string>
+    <string name="delete">Delete</string>
 </resources>

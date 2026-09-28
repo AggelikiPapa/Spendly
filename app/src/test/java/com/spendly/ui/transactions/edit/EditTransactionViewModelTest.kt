@@ -1,5 +1,6 @@
 package com.spendly.ui.transactions.edit
 
+import com.spendly.RuleTestRepository
 import com.spendly.domain.model.Category
 import com.spendly.domain.model.ImportStatus
 import com.spendly.domain.model.Money
@@ -8,6 +9,7 @@ import com.spendly.domain.model.TransactionSource
 import com.spendly.domain.model.TransactionType
 import com.spendly.domain.repository.CategoryRepository
 import com.spendly.domain.repository.TransactionRepository
+import com.spendly.wallet.importer.SaveMerchantCategoryRuleUseCase
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -45,6 +47,7 @@ class EditTransactionViewModelTest {
     )
     private val transactions = FakeTransactions(original)
     private val categories = FakeCategories()
+    private val rules = RuleTestRepository()
 
     @Before fun setUp() { Dispatchers.setMain(dispatcher) }
     @After fun tearDown() { Dispatchers.resetMain() }
@@ -165,7 +168,44 @@ class EditTransactionViewModelTest {
         assertFalse(deleteState.operationError!!.contains("database internals"))
     }
 
-    private fun newViewModel() = EditTransactionViewModel(42, transactions, categories, clock)
+    @Test fun walletEditCanRememberMerchantOnceAndUncheckedEditLeavesRuleAlone() = runTest {
+        transactions.item = original.copy(source = TransactionSource.GOOGLE_WALLET)
+        val vm = newViewModel()
+        advanceUntilIdle()
+        assertTrue((vm.uiState.value as EditTransactionUiState.Ready).canRememberMerchant)
+        vm.onRememberMerchantChanged(true)
+        vm.save()
+        vm.save()
+        advanceUntilIdle()
+        assertEquals(1, rules.insertCalls)
+        assertEquals("Shop", rules.items.value.single().merchantPattern)
+        val another = newViewModel()
+        advanceUntilIdle()
+        another.onCategorySelected(1)
+        another.save()
+        advanceUntilIdle()
+        assertEquals(1, rules.items.value.size)
+        assertEquals(1, rules.insertCalls)
+    }
+
+    @Test fun manualEditNeverOffersRememberAndRuleFailureKeepsTransactionUnsaved() = runTest {
+        val manual = newViewModel()
+        advanceUntilIdle()
+        assertFalse((manual.uiState.value as EditTransactionUiState.Ready).canRememberMerchant)
+        manual.onRememberMerchantChanged(true)
+        assertFalse((manual.uiState.value as EditTransactionUiState.Ready).rememberMerchant)
+        transactions.item = original.copy(source = TransactionSource.GOOGLE_WALLET)
+        rules.failInsert = true
+        val wallet = newViewModel()
+        advanceUntilIdle()
+        wallet.onRememberMerchantChanged(true)
+        wallet.save()
+        advanceUntilIdle()
+        assertTrue(transactions.updates.isEmpty())
+        assertNotNull((wallet.uiState.value as EditTransactionUiState.Ready).operationError)
+    }
+
+    private fun newViewModel() = EditTransactionViewModel(42, transactions, categories, clock, SaveMerchantCategoryRuleUseCase(rules, categories))
 
     private class FakeTransactions(var item: Transaction?) : TransactionRepository {
         val requestedIds = mutableListOf<Long>()
@@ -195,7 +235,7 @@ class EditTransactionViewModelTest {
         val items = MutableStateFlow(listOf(Category(1, "Groceries", true, true)))
         override suspend fun insert(category: Category): Long = error("Unused")
         override suspend fun update(category: Category): Int = error("Unused")
-        override suspend fun getById(id: Long): Category? = error("Unused")
+        override suspend fun getById(id: Long): Category? = items.value.firstOrNull { it.id == id }
         override fun observeActive(): Flow<List<Category>> = items
         override fun observeAll(): Flow<List<Category>> = items
     }

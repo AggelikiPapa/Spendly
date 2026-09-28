@@ -10,6 +10,7 @@ import com.spendly.domain.repository.CategoryRepository
 import com.spendly.domain.repository.TransactionRepository
 import com.spendly.ui.transactions.form.TransactionFormValidator
 import com.spendly.ui.transactions.form.TransactionFormValues
+import com.spendly.wallet.importer.SaveMerchantCategoryRuleUseCase
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.LocalDate
@@ -27,6 +28,7 @@ class ReviewTransactionViewModel(
     private val transactions: TransactionRepository,
     private val categories: CategoryRepository,
     private val clock: Clock = Clock.systemDefaultZone(),
+    private val saveMerchantRule: SaveMerchantCategoryRuleUseCase,
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow<ReviewTransactionUiState>(ReviewTransactionUiState.Loading)
     val uiState: StateFlow<ReviewTransactionUiState> = mutableUiState
@@ -56,6 +58,7 @@ class ReviewTransactionViewModel(
                     ),
                     notesInput = transaction.notes.orEmpty(),
                     rawSourceText = transaction.rawSourceText,
+                    source = transaction.source,
                 )
                 categories.observeAll().collect { allCategories ->
                     originalCategory = allCategories.firstOrNull { it.id == transaction.categoryId }
@@ -85,12 +88,18 @@ class ReviewTransactionViewModel(
     }
 
     fun onMerchantChanged(value: String) = updateReady {
-        if (it.isSaving) it else it.copy(form = it.form.copy(merchantInput = value), merchantError = null, operationError = null)
+        if (it.isSaving) it else it.copy(
+            form = it.form.copy(merchantInput = value),
+            rememberMerchant = it.rememberMerchant && value.isNotBlank(),
+            merchantError = null,
+            operationError = null,
+        )
     }
 
     fun onCategorySelected(id: Long?) = updateReady {
         if (it.isSaving) it else it.copy(
             form = it.form.copy(selectedCategoryId = id, selectedInactiveCategoryName = null, categoryError = null),
+            rememberMerchant = it.rememberMerchant && it.form.categories.any { category -> category.id == id },
             operationError = null,
         )
     }
@@ -101,6 +110,10 @@ class ReviewTransactionViewModel(
 
     fun onNotesChanged(value: String) = updateReady {
         if (it.isSaving) it else it.copy(notesInput = value, operationError = null)
+    }
+
+    fun onRememberMerchantChanged(value: Boolean) = updateReady {
+        if (it.isSaving || !it.canRememberMerchant) it else it.copy(rememberMerchant = value, operationError = null)
     }
 
     fun confirm() {
@@ -126,8 +139,14 @@ class ReviewTransactionViewModel(
             return
         }
         val amount = validation.amount ?: return
+        val shouldSaveRule = state.rememberMerchant && state.canRememberMerchant
+        if (state.rememberMerchant && !shouldSaveRule) {
+            updateReady { it.copy(operationError = "Choose an active category and enter a merchant to remember it.") }
+            return
+        }
         updateReady { it.copy(isSaving = true, operationError = null) }
         viewModelScope.launch {
+            var ruleSaved = false
             try {
                 val current = transactions.getById(transactionId)
                 if (current == null || !TransactionVisibility.needsWalletReview(current)) {
@@ -144,12 +163,23 @@ class ReviewTransactionViewModel(
                     importStatus = ImportStatus.CONFIRMED,
                     updatedAt = clock.instant(),
                 )
-                if (transactions.update(updated) == 0) mutableUiState.value = ReviewTransactionUiState.NotFound
+                if (shouldSaveRule) {
+                    saveMerchantRule.save(merchant, requireNotNull(updated.categoryId))
+                    ruleSaved = true
+                }
+                if (transactions.update(updated) == 0) {
+                    if (ruleSaved) updateReady { it.copy(isSaving = false, operationError = "Transaction could not be found. The merchant rule was saved.") }
+                    else mutableUiState.value = ReviewTransactionUiState.NotFound
+                }
                 else completedChannel.send(Unit)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
-                updateReady { it.copy(isSaving = false, operationError = "Could not confirm the transaction. Please try again.") }
+                updateReady { it.copy(isSaving = false, operationError = when {
+                    ruleSaved -> "Could not confirm the transaction. The merchant rule was saved. Please try again."
+                    shouldSaveRule -> "Could not save the merchant rule. The transaction was not confirmed. Please try again."
+                    else -> "Could not confirm the transaction. Please try again."
+                }) }
             }
         }
     }

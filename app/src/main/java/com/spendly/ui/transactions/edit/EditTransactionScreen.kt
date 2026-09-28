@@ -14,12 +14,14 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.clickable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -67,6 +69,14 @@ fun EditTransactionScreen(
                     onMerchantChanged = viewModel::onMerchantChanged,
                     onDateSelected = viewModel::onDateSelected,
                 )
+                if (current.canRememberMerchant) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().clickable(enabled = !busy) {
+                        viewModel.onRememberMerchantChanged(!current.rememberMerchant)
+                    }) {
+                        Checkbox(checked = current.rememberMerchant, onCheckedChange = viewModel::onRememberMerchantChanged, enabled = !busy)
+                        Text(stringResource(R.string.remember_merchant))
+                    }
+                }
                 current.operationError?.let { InlineError(it) }
                 Button(onClick = viewModel::save, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(if (current.isSaving) R.string.saving else R.string.save_transaction))

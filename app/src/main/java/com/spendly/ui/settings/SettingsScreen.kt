@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
@@ -31,7 +33,7 @@ fun SettingsScreen(
 ) {
     val walletState by walletViewModel.uiState.collectAsStateWithLifecycle()
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { walletViewModel.refreshAccess() }
-    Column(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
+    Column(modifier = Modifier.fillMaxSize().padding(contentPadding).verticalScroll(rememberScrollState())) {
         Text(
             text = stringResource(R.string.budget_section),
             style = MaterialTheme.typography.titleMedium,
@@ -68,6 +70,17 @@ fun SettingsScreen(
             },
             trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
             modifier = Modifier.fillMaxWidth().clickable { onOpenDestination(SettingsDestination.GoogleWalletTracking) },
+        )
+        Text(
+            text = stringResource(R.string.automation),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 8.dp),
+        )
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.merchant_rules)) },
+            supportingContent = { Text(stringResource(R.string.merchant_rules_summary)) },
+            trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth().clickable { onOpenDestination(SettingsDestination.MerchantRules) },
         )
     }
 }

@@ -1,5 +1,7 @@
 package com.spendly.ui.review
 
+import com.spendly.RuleTestRepository
+import com.spendly.wallet.importer.SaveMerchantCategoryRuleUseCase
 import com.spendly.domain.model.ImportStatus
 import com.spendly.domain.model.Money
 import com.spendly.domain.model.TransactionSource
@@ -28,13 +30,14 @@ class ReviewTransactionViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val transactions = FakeReviewTransactions()
     private val categories = FakeReviewCategories()
+    private val rules = RuleTestRepository()
     private val now = Instant.parse("2026-09-20T12:00:00Z")
     private val clock = Clock.fixed(now, ZoneOffset.UTC)
 
     @Before fun setUp() { Dispatchers.setMain(dispatcher) }
     @After fun tearDown() { Dispatchers.resetMain() }
 
-    private fun viewModel() = ReviewTransactionViewModel(1, transactions, categories, clock)
+    private fun viewModel() = ReviewTransactionViewModel(1, transactions, categories, clock, SaveMerchantCategoryRuleUseCase(rules, categories))
     private fun ready(vm: ReviewTransactionViewModel) = vm.uiState.value as ReviewTransactionUiState.Ready
 
     @Test fun confirmEditsFieldsAndPreservesWalletIdentity() = runTest {
@@ -152,5 +155,32 @@ class ReviewTransactionViewModelTest {
         val vm = viewModel()
         advanceUntilIdle()
         assertEquals(ReviewTransactionUiState.NotFound, vm.uiState.value)
+    }
+
+    @Test fun confirmCanRememberMerchantAndRepeatedTapWritesOnce() = runTest {
+        transactions.items.value = listOf(reviewTransaction(categoryId = 1))
+        val vm = viewModel()
+        advanceUntilIdle()
+        assertTrue(ready(vm).canRememberMerchant)
+        vm.onRememberMerchantChanged(true)
+        vm.confirm()
+        vm.confirm()
+        advanceUntilIdle()
+        assertEquals(1, rules.insertCalls)
+        assertEquals("Market", rules.items.value.single().merchantPattern)
+        assertEquals(ImportStatus.CONFIRMED, transactions.items.value.single().importStatus)
+    }
+
+    @Test fun ruleFailureLeavesReviewItemUnconfirmedWithSafeError() = runTest {
+        transactions.items.value = listOf(reviewTransaction(categoryId = 1))
+        rules.failInsert = true
+        val vm = viewModel()
+        advanceUntilIdle()
+        vm.onRememberMerchantChanged(true)
+        vm.confirm()
+        advanceUntilIdle()
+        assertEquals(0, transactions.updateCalls)
+        assertEquals(ImportStatus.NEEDS_REVIEW, transactions.items.value.single().importStatus)
+        assertNotNull(ready(vm).operationError)
     }
 }

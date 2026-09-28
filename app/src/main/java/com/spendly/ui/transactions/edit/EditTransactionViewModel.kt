@@ -9,6 +9,7 @@ import com.spendly.domain.repository.CategoryRepository
 import com.spendly.domain.repository.TransactionRepository
 import com.spendly.ui.transactions.form.TransactionFormValidator
 import com.spendly.ui.transactions.form.TransactionFormValues
+import com.spendly.wallet.importer.SaveMerchantCategoryRuleUseCase
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.LocalDate
@@ -27,6 +28,7 @@ class EditTransactionViewModel(
     private val transactions: TransactionRepository,
     private val categories: CategoryRepository,
     private val clock: Clock = Clock.systemDefaultZone(),
+    private val saveMerchantRule: SaveMerchantCategoryRuleUseCase,
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow<EditTransactionUiState>(EditTransactionUiState.Loading)
     val uiState: StateFlow<EditTransactionUiState> = mutableUiState
@@ -48,6 +50,7 @@ class EditTransactionViewModel(
                 val occurredLocal = transaction.occurredAt.atZone(clock.zone)
                 val fractionDigits = fractionDigits(transaction.amount.currencyCode)
                 mutableUiState.value = EditTransactionUiState.Ready(
+                    source = transaction.source,
                     form = TransactionFormValues(
                         amountInput = BigDecimal.valueOf(transaction.amount.amountMinor, fractionDigits).abs().toPlainString(),
                         currencyCode = transaction.amount.currencyCode,
@@ -98,6 +101,7 @@ class EditTransactionViewModel(
                 selectedInactiveCategoryName = null,
                 categoryError = null,
             ),
+            rememberMerchant = false,
             operationError = null,
         )
     }
@@ -105,16 +109,25 @@ class EditTransactionViewModel(
     fun onCategorySelected(id: Long?) = updateReady {
         if (it.isSaving || it.isDeleting) it else it.copy(
             form = it.form.copy(selectedCategoryId = id, selectedInactiveCategoryName = null, categoryError = null),
+            rememberMerchant = it.rememberMerchant && it.form.categories.any { category -> category.id == id },
             operationError = null,
         )
     }
 
     fun onMerchantChanged(value: String) = updateReady {
-        if (it.isSaving || it.isDeleting) it else it.copy(form = it.form.copy(merchantInput = value), operationError = null)
+        if (it.isSaving || it.isDeleting) it else it.copy(
+            form = it.form.copy(merchantInput = value),
+            rememberMerchant = it.rememberMerchant && value.isNotBlank(),
+            operationError = null,
+        )
     }
 
     fun onDateSelected(value: LocalDate) = updateReady {
         if (it.isSaving || it.isDeleting) it else it.copy(form = it.form.copy(selectedDate = value), operationError = null)
+    }
+
+    fun onRememberMerchantChanged(value: Boolean) = updateReady {
+        if (it.isSaving || it.isDeleting || !it.canRememberMerchant) it else it.copy(rememberMerchant = value, operationError = null)
     }
 
     fun save() {
@@ -134,8 +147,14 @@ class EditTransactionViewModel(
             return
         }
         val amount = validation.amount ?: return
+        val shouldSaveRule = state.rememberMerchant && state.canRememberMerchant
+        if (state.rememberMerchant && !shouldSaveRule) {
+            updateReady { it.copy(operationError = "Choose an active category and enter a merchant to remember it.") }
+            return
+        }
         updateReady { it.copy(isSaving = true, operationError = null) }
         viewModelScope.launch {
+            var ruleSaved = false
             try {
                 val originalTime = transaction.occurredAt.atZone(clock.zone).toLocalTime()
                 val updated = transaction.copy(
@@ -146,15 +165,24 @@ class EditTransactionViewModel(
                     occurredAt = form.selectedDate.atTime(originalTime).atZone(clock.zone).toInstant(),
                     updatedAt = clock.instant(),
                 )
+                if (shouldSaveRule) {
+                    saveMerchantRule.save(updated.merchant.orEmpty(), requireNotNull(updated.categoryId))
+                    ruleSaved = true
+                }
                 if (transactions.update(updated) == 0) {
-                    mutableUiState.value = EditTransactionUiState.NotFound
+                    if (ruleSaved) updateReady { it.copy(isSaving = false, operationError = "Transaction could not be found. The merchant rule was saved.") }
+                    else mutableUiState.value = EditTransactionUiState.NotFound
                 } else {
                     completedChannel.send(Unit)
                 }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
-                updateReady { it.copy(isSaving = false, operationError = "Could not save the transaction. Please try again.") }
+                updateReady { it.copy(isSaving = false, operationError = when {
+                    ruleSaved -> "Could not save the transaction. The merchant rule was saved. Please try again."
+                    shouldSaveRule -> "Could not save the merchant rule. The transaction was not saved. Please try again."
+                    else -> "Could not save the transaction. Please try again."
+                }) }
             }
         }
     }

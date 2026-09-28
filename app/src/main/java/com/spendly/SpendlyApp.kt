@@ -46,6 +46,9 @@ import com.spendly.ui.settings.budget.monthlyBudgetViewModelFactory
 import com.spendly.ui.settings.wallet.GoogleWalletTrackingScreen
 import com.spendly.ui.settings.wallet.GoogleWalletTrackingViewModel
 import com.spendly.ui.settings.wallet.googleWalletTrackingViewModelFactory
+import com.spendly.ui.settings.merchantrules.MerchantRulesScreen
+import com.spendly.ui.settings.merchantrules.MerchantRulesViewModel
+import com.spendly.ui.settings.merchantrules.merchantRulesViewModelFactory
 import com.spendly.ui.transactions.TransactionsScreen
 import com.spendly.ui.transactions.TransactionsViewModel
 import com.spendly.ui.transactions.transactionsViewModelFactory
@@ -184,7 +187,7 @@ fun SpendlyApp() {
                 val id = requireNotNull(entry.arguments?.getLong(SpendlyRoutes.TransactionId))
                 val viewModel: ReviewTransactionViewModel = viewModel(
                     viewModelStoreOwner = entry,
-                    factory = reviewTransactionViewModelFactory(id, application.transactionRepository, application.categoryRepository),
+                    factory = reviewTransactionViewModelFactory(id, application.transactionRepository, application.categoryRepository, application.saveMerchantCategoryRuleUseCase),
                 )
                 ReviewTransactionScreen(viewModel, innerPadding) { navController.popBackStack() }
             }
@@ -227,6 +230,14 @@ fun SpendlyApp() {
                 )
                 CategoryManagementScreen(viewModel, innerPadding) { navController.popBackStack() }
             }
+            composable(SpendlyRoutes.MerchantRules) { entry ->
+                val application = LocalContext.current.applicationContext as SpendlyApplication
+                val viewModel: MerchantRulesViewModel = viewModel(
+                    viewModelStoreOwner = entry,
+                    factory = merchantRulesViewModelFactory(application.merchantCategoryRuleRepository, application.categoryRepository),
+                )
+                MerchantRulesScreen(viewModel, innerPadding) { navController.popBackStack() }
+            }
             composable(SpendlyRoutes.AddTransaction) { entry ->
                 val application = LocalContext.current.applicationContext as SpendlyApplication
                 val viewModel: AddTransactionViewModel = viewModel(
@@ -250,6 +261,7 @@ fun SpendlyApp() {
                         id,
                         application.transactionRepository,
                         application.categoryRepository,
+                        application.saveMerchantCategoryRuleUseCase,
                     ),
                 )
                 EditTransactionScreen(viewModel, innerPadding) { navController.popBackStack() }

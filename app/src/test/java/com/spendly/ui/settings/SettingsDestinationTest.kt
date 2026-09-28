@@ -11,7 +11,8 @@ class SettingsDestinationTest {
     @Test fun walletTrackingIsASettingsDestinationWithItsOwnRoute() {
         assertTrue(SettingsDestination.entries.contains(SettingsDestination.GoogleWalletTracking))
         assertEquals(SpendlyRoutes.GoogleWalletTracking, SettingsDestination.GoogleWalletTracking.route)
-        assertEquals(3, SettingsDestination.entries.map { it.route }.distinct().size)
+        assertEquals(4, SettingsDestination.entries.map { it.route }.distinct().size)
+        assertEquals(SpendlyRoutes.MerchantRules, SettingsDestination.MerchantRules.route)
         assertFalse(SpendlyDestination.bottomNavigation.any { it.route == SpendlyRoutes.GoogleWalletTracking })
     }
 }

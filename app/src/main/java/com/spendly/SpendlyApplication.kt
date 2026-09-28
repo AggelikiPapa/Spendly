@@ -12,6 +12,7 @@ import com.spendly.domain.repository.MerchantCategoryRuleRepository
 import com.spendly.domain.repository.TransactionRepository
 import com.spendly.wallet.listener.NotificationAccessGateway
 import com.spendly.wallet.listener.NotificationAccessManager
+import com.spendly.wallet.importer.SaveMerchantCategoryRuleUseCase
 
 class SpendlyApplication : Application() {
     private val database by lazy { SpendlyDatabaseProvider.get(this) }
@@ -26,6 +27,10 @@ class SpendlyApplication : Application() {
 
     val merchantCategoryRuleRepository: MerchantCategoryRuleRepository by lazy {
         RoomMerchantCategoryRuleRepository(database.merchantCategoryRuleDao())
+    }
+
+    val saveMerchantCategoryRuleUseCase by lazy {
+        SaveMerchantCategoryRuleUseCase(merchantCategoryRuleRepository, categoryRepository)
     }
 
     val monthlyBudgetRepository: MonthlyBudgetRepository by lazy {
