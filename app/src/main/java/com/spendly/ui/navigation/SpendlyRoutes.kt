@@ -4,6 +4,7 @@ object SpendlyRoutes {
     const val AddTransaction = "add_transaction"
     const val Categories = "categories"
     const val MonthlyBudget = "monthly_budget"
+    const val GoogleWalletTracking = "google_wallet_tracking"
     const val TransactionId = "transactionId"
     const val EditTransaction = "edit_transaction/{$TransactionId}"
 

@@ -74,4 +74,13 @@
     <string name="actual_spending">Actual spending: %1$s</string>
     <string name="ahead_of_target">%1$s ahead of today’s target</string>
     <string name="below_target">%1$s below today’s target</string>
+    <string name="automatic_transaction_tracking">Automatic transaction tracking</string>
+    <string name="google_wallet_tracking">Google Wallet tracking</string>
+    <string name="wallet_tracking_settings_summary">Set up notification access for future tracking</string>
+    <string name="wallet_tracking_future_description">Spendly will later use eligible Google Wallet purchase notifications to detect transactions. Automatic importing is not available yet.</string>
+    <string name="notification_access">Notification access</string>
+    <string name="notification_access_enabled">Status: Enabled</string>
+    <string name="notification_access_required">Status: Permission required</string>
+    <string name="grant_notification_access">Grant notification access</string>
+    <string name="wallet_tracking_privacy">Notification processing will happen locally on this device. Spendly will not upload notification contents.</string>
 </resources>

@@ -18,12 +18,13 @@ Spendly is a local-first Android personal expense tracker. The project has Room-
 - Current-month EUR spending-limit configuration through Settings
 - Dashboard showing the monthly limit, expense spending, remaining budget, percentage used, daily allowance, and recent transactions
 - Spending pace showing expected spending by today, above/on/below-plan status, and the signed difference from plan
+- Notification-listener access setup for future Google Wallet transaction detection
 
 ## Planned capabilities
 
 The following are future plans and are **not implemented yet**:
 
-- Google Wallet notification import
+- Google Wallet notification parsing and import
 - Spending alerts
 - Spending analytics
 - A home-screen budget widget
@@ -33,6 +34,8 @@ The app stores transactions locally through Room. The Transactions screen shows 
 Settings → Categories shows active and inactive categories. Users can add and rename custom categories, and deactivate or reactivate any category. Built-in category names remain fixed; their built-in status is retained when their active state changes. Inactive categories stay on historical transactions but are omitted from new category choices. Categories cannot be permanently deleted. Category-specific budgets are not implemented.
 
 Settings → Monthly spending limit lets users set or update the current calendar month's EUR limit. The Dashboard compares it with current-month expenses, shows remaining budget and a daily allowance, and previews recent transactions. It also compares actual spending with the expected amount through today, using the larger of 5% of expected spending or €5 as the on-pace tolerance. Income and transfers do not consume the spending limit. Notification-based budget warnings and automatic Google Wallet tracking are not implemented.
+
+Settings > Google Wallet tracking shows whether Android notification-listener access is enabled and opens the system settings where the user can grant or revoke it. Spendly registers a minimal listener service, but it does not inspect, parse, store, or import Google Wallet notifications yet. Notification processing will remain local on the device.
 
 ## Build
 

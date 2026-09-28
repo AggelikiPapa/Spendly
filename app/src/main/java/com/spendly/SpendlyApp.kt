@@ -38,6 +38,9 @@ import com.spendly.ui.settings.categories.categoryManagementViewModelFactory
 import com.spendly.ui.settings.budget.MonthlyBudgetScreen
 import com.spendly.ui.settings.budget.MonthlyBudgetViewModel
 import com.spendly.ui.settings.budget.monthlyBudgetViewModelFactory
+import com.spendly.ui.settings.wallet.GoogleWalletTrackingScreen
+import com.spendly.ui.settings.wallet.GoogleWalletTrackingViewModel
+import com.spendly.ui.settings.wallet.googleWalletTrackingViewModelFactory
 import com.spendly.ui.transactions.TransactionsScreen
 import com.spendly.ui.transactions.TransactionsViewModel
 import com.spendly.ui.transactions.transactionsViewModelFactory
@@ -158,12 +161,27 @@ fun SpendlyApp() {
             }
             composable(SpendlyDestination.Review.route) { ReviewScreen(innerPadding) }
             composable(SpendlyDestination.Analytics.route) { AnalyticsScreen(innerPadding) }
-            composable(SpendlyDestination.Settings.route) {
-                SettingsScreen(
-                    contentPadding = innerPadding,
-                    onOpenBudget = { navController.navigate(SpendlyRoutes.MonthlyBudget) { launchSingleTop = true } },
-                    onOpenCategories = { navController.navigate(SpendlyRoutes.Categories) { launchSingleTop = true } },
+            composable(SpendlyDestination.Settings.route) { entry ->
+                val application = LocalContext.current.applicationContext as SpendlyApplication
+                val walletViewModel: GoogleWalletTrackingViewModel = viewModel(
+                    viewModelStoreOwner = entry,
+                    factory = googleWalletTrackingViewModelFactory(application.notificationAccessGateway),
                 )
+                SettingsScreen(
+                    walletViewModel = walletViewModel,
+                    contentPadding = innerPadding,
+                    onOpenDestination = { destination ->
+                        navController.navigate(destination.route) { launchSingleTop = true }
+                    },
+                )
+            }
+            composable(SpendlyRoutes.GoogleWalletTracking) { entry ->
+                val application = LocalContext.current.applicationContext as SpendlyApplication
+                val viewModel: GoogleWalletTrackingViewModel = viewModel(
+                    viewModelStoreOwner = entry,
+                    factory = googleWalletTrackingViewModelFactory(application.notificationAccessGateway),
+                )
+                GoogleWalletTrackingScreen(viewModel, innerPadding) { navController.popBackStack() }
             }
             composable(SpendlyRoutes.MonthlyBudget) { entry ->
                 val application = LocalContext.current.applicationContext as SpendlyApplication
