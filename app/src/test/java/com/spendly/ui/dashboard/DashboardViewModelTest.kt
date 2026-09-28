@@ -113,6 +113,8 @@ class DashboardViewModelTest {
         override suspend fun update(transaction: Transaction): Int = error("Unused")
         override suspend fun deleteById(id: Long): Int = error("Unused")
         override suspend fun getById(id: Long): Transaction? { getByIdCalls++; return null }
+        override suspend fun getBySourceAndExternalReference(source: com.spendly.domain.model.TransactionSource, externalReference: String): Transaction? = error("Unused")
+        override suspend fun getBySourceInTimeRange(source: com.spendly.domain.model.TransactionSource, startInclusive: Instant, endInclusive: Instant): List<Transaction> = error("Unused")
         override fun observeAll(): Flow<List<Transaction>> = value
         override fun observeInRange(startInclusive: Instant, endExclusive: Instant): Flow<List<Transaction>> = emptyFlow()
     }

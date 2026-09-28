@@ -12,12 +12,16 @@ import com.spendly.wallet.parser.WalletParseResult
 import java.time.Clock
 import java.time.Instant
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 enum class WalletImportOutcome {
     IMPORTED,
     STORED_FOR_REVIEW,
     IGNORED_NOT_PURCHASE,
     SKIPPED_INSUFFICIENT_DATA,
+    SKIPPED_DUPLICATE_REFERENCE,
+    SKIPPED_DUPLICATE_HEURISTIC,
     FAILED,
 }
 
@@ -26,19 +30,22 @@ data class WalletImportResult(
     val parseResult: WalletParseResult?,
 )
 
-/** Maps parsed Wallet purchases to the existing transaction repository without deduplication. */
+/** Maps parsed Wallet purchases to the repository, serializing duplicate checks with inserts. */
 class WalletTransactionImportCoordinator(
     private val transactions: TransactionRepository,
     private val parser: GoogleWalletNotificationParser = GoogleWalletNotificationParser(),
     private val clock: Clock = Clock.systemUTC(),
 ) {
+    private val duplicateDetector = WalletDuplicateDetector(transactions)
+    private val importMutex = Mutex()
+
     suspend fun import(notification: CapturedWalletNotification): WalletImportResult {
         var parsed: WalletParseResult? = null
         return try {
             when (val result = parser.parse(notification).also { parsed = it }) {
                 is WalletParseResult.Success -> {
                     val purchase = result.purchase
-                    transactions.insert(
+                    insertIfUnique(
                         transaction(
                             notification = notification,
                             amount = purchase.amount,
@@ -46,15 +53,15 @@ class WalletTransactionImportCoordinator(
                             occurredAt = purchase.occurredAt,
                             importStatus = ImportStatus.CONFIRMED,
                         ),
+                        WalletImportOutcome.IMPORTED,
                     )
-                    WalletImportOutcome.IMPORTED
                 }
                 is WalletParseResult.NeedsReview -> {
                     val amount = result.amount ?: return WalletImportResult(
                         WalletImportOutcome.SKIPPED_INSUFFICIENT_DATA,
                         result,
                     )
-                    transactions.insert(
+                    insertIfUnique(
                         transaction(
                             notification = notification,
                             amount = amount,
@@ -62,8 +69,8 @@ class WalletTransactionImportCoordinator(
                             occurredAt = result.occurredAt,
                             importStatus = ImportStatus.NEEDS_REVIEW,
                         ),
+                        WalletImportOutcome.STORED_FOR_REVIEW,
                     )
-                    WalletImportOutcome.STORED_FOR_REVIEW
                 }
                 WalletParseResult.NotPurchase -> WalletImportOutcome.IGNORED_NOT_PURCHASE
             }.let { WalletImportResult(it, parsed) }
@@ -73,6 +80,18 @@ class WalletTransactionImportCoordinator(
             WalletImportResult(WalletImportOutcome.FAILED, parsed)
         }
     }
+
+    private suspend fun insertIfUnique(candidate: Transaction, importedOutcome: WalletImportOutcome): WalletImportOutcome =
+        importMutex.withLock {
+            when (duplicateDetector.check(candidate)) {
+                DuplicateCheckResult.UNIQUE -> {
+                    transactions.insert(candidate)
+                    importedOutcome
+                }
+                DuplicateCheckResult.DUPLICATE_BY_EXTERNAL_REFERENCE -> WalletImportOutcome.SKIPPED_DUPLICATE_REFERENCE
+                DuplicateCheckResult.DUPLICATE_BY_HEURISTIC -> WalletImportOutcome.SKIPPED_DUPLICATE_HEURISTIC
+            }
+        }
 
     private fun transaction(
         notification: CapturedWalletNotification,
@@ -92,7 +111,7 @@ class WalletTransactionImportCoordinator(
             occurredAt = occurredAt,
             source = TransactionSource.GOOGLE_WALLET,
             importStatus = importStatus,
-            externalReference = notification.notificationKey,
+            externalReference = notification.notificationKey?.takeIf { it.isNotBlank() },
             rawSourceText = notification.text,
             notes = null,
             createdAt = now,

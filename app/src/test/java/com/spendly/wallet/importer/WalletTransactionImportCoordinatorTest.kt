@@ -16,6 +16,9 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneOffset
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.yield
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -97,6 +100,8 @@ class WalletTransactionImportCoordinatorTest {
         assertEquals(WalletImportOutcome.IGNORED_NOT_PURCHASE, result.outcome)
         assertEquals(WalletParseResult.NotPurchase, result.parseResult)
         assertEquals(0, repository.insertCalls)
+        assertEquals(0, repository.referenceLookupCalls)
+        assertEquals(0, repository.rangeLookupCalls)
     }
 
     @Test fun partialPurchaseWithAmountIsStoredForLaterReview() = runTest {
@@ -143,13 +148,47 @@ class WalletTransactionImportCoordinatorTest {
         assertTrue(repository.inserted.isEmpty())
     }
 
-    @Test fun repeatedDeliveryRemainsUndeduplicatedForApp014() = runTest {
+    @Test fun repeatedDeliveryIsSkippedByReference() = runTest {
         val capture = notification()
-        coordinator.import(capture)
-        coordinator.import(capture)
+        assertEquals(WalletImportOutcome.IMPORTED, coordinator.import(capture).outcome)
+        assertEquals(WalletImportOutcome.SKIPPED_DUPLICATE_REFERENCE, coordinator.import(capture).outcome)
 
-        assertEquals(2, repository.insertCalls)
-        assertEquals(2, repository.observeAll().first().size)
+        assertEquals(1, repository.insertCalls)
+        assertEquals(1, repository.observeAll().first().size)
+    }
+
+    @Test fun reviewableRedeliveryIsAlsoSkipped() = runTest {
+        val capture = notification(title = " ")
+        assertEquals(WalletImportOutcome.STORED_FOR_REVIEW, coordinator.import(capture).outcome)
+        assertEquals(WalletImportOutcome.SKIPPED_DUPLICATE_REFERENCE, coordinator.import(capture).outcome)
+        assertEquals(1, repository.insertCalls)
+    }
+
+    @Test fun missingReferenceUsesHeuristicInImportPipeline() = runTest {
+        val capture = notification(key = null)
+        assertEquals(WalletImportOutcome.IMPORTED, coordinator.import(capture).outcome)
+        assertEquals(WalletImportOutcome.SKIPPED_DUPLICATE_HEURISTIC, coordinator.import(capture).outcome)
+        assertEquals(1, repository.insertCalls)
+    }
+
+    @Test fun lookupFailureDoesNotInsertOrCrash() = runTest {
+        repository.failLookup = true
+        assertEquals(WalletImportOutcome.FAILED, coordinator.import(notification()).outcome)
+        assertEquals(0, repository.insertCalls)
+    }
+
+    @Test fun simultaneousRedeliveryInsertsAtMostOnce() = runTest {
+        repository.suspendDuringLookup = true
+        val capture = notification()
+        val outcomes = coroutineScope {
+            listOf(
+                async { coordinator.import(capture).outcome },
+                async { coordinator.import(capture).outcome },
+            ).map { it.await() }
+        }
+        assertEquals(1, outcomes.count { it == WalletImportOutcome.IMPORTED })
+        assertEquals(1, outcomes.count { it == WalletImportOutcome.SKIPPED_DUPLICATE_REFERENCE })
+        assertEquals(1, repository.insertCalls)
     }
 
     private class FakeTransactionRepository : TransactionRepository {
@@ -157,6 +196,10 @@ class WalletTransactionImportCoordinatorTest {
         val rows = MutableStateFlow<List<Transaction>>(emptyList())
         var insertCalls = 0
         var failInsert = false
+        var failLookup = false
+        var suspendDuringLookup = false
+        var referenceLookupCalls = 0
+        var rangeLookupCalls = 0
 
         override suspend fun insert(transaction: Transaction): Long {
             insertCalls++
@@ -170,6 +213,22 @@ class WalletTransactionImportCoordinatorTest {
         override suspend fun update(transaction: Transaction): Int = error("Unused")
         override suspend fun deleteById(id: Long): Int = error("Unused")
         override suspend fun getById(id: Long): Transaction? = rows.value.firstOrNull { it.id == id }
+        override suspend fun getBySourceAndExternalReference(source: TransactionSource, externalReference: String): Transaction? {
+            referenceLookupCalls++
+            if (suspendDuringLookup) yield()
+            if (failLookup) error("Simulated lookup failure")
+            return rows.value.firstOrNull { it.source == source && it.externalReference == externalReference }
+        }
+        override suspend fun getBySourceInTimeRange(
+            source: TransactionSource,
+            startInclusive: Instant,
+            endInclusive: Instant,
+        ): List<Transaction> {
+            rangeLookupCalls++
+            if (suspendDuringLookup) yield()
+            if (failLookup) error("Simulated lookup failure")
+            return rows.value.filter { it.source == source && it.occurredAt >= startInclusive && it.occurredAt <= endInclusive }
+        }
         override fun observeAll(): Flow<List<Transaction>> = rows
         override fun observeInRange(startInclusive: Instant, endExclusive: Instant): Flow<List<Transaction>> =
             rows.map { list -> list.filter { it.occurredAt >= startInclusive && it.occurredAt < endExclusive } }

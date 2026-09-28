@@ -122,6 +122,25 @@ class SpendlyDatabaseTest {
     }
 
     @Test
+    fun walletDuplicateLookupsAreSourceScopedAndIncludeTimeBoundaries() = runBlocking {
+        val repository = RoomTransactionRepository(database.transactionDao())
+        val center = Instant.parse("2026-09-15T12:00:00Z")
+        val start = center.minusSeconds(120)
+        val end = center.plusSeconds(120)
+        repository.insert(transaction(source = TransactionSource.MANUAL, occurredAt = center))
+        val startId = repository.insert(transaction(source = TransactionSource.GOOGLE_WALLET, occurredAt = start))
+        val endId = repository.insert(transaction(source = TransactionSource.GOOGLE_WALLET, occurredAt = end))
+        repository.insert(transaction(source = TransactionSource.GOOGLE_WALLET, occurredAt = end.plusMillis(1)))
+
+        assertEquals(startId, repository.getBySourceAndExternalReference(TransactionSource.GOOGLE_WALLET, "reference")?.id)
+        assertEquals(null, repository.getBySourceAndExternalReference(TransactionSource.GOOGLE_WALLET, "missing"))
+        assertEquals(
+            setOf(startId, endId),
+            repository.getBySourceInTimeRange(TransactionSource.GOOGLE_WALLET, start, end).map { it.id }.toSet(),
+        )
+    }
+
+    @Test
     fun categoryCanBePersistedAndObservedByActiveState() = runBlocking {
         val repository = RoomCategoryRepository(database.categoryDao())
         val id = repository.insert(Category(0, "Custom", isSystem = false, isActive = false))

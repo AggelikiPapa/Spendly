@@ -185,6 +185,8 @@ class EditTransactionViewModelTest {
             return 1
         }
         override suspend fun getById(id: Long): Transaction? { requestedIds += id; return item }
+        override suspend fun getBySourceAndExternalReference(source: com.spendly.domain.model.TransactionSource, externalReference: String): Transaction? = error("Unused")
+        override suspend fun getBySourceInTimeRange(source: com.spendly.domain.model.TransactionSource, startInclusive: Instant, endInclusive: Instant): List<Transaction> = error("Unused")
         override fun observeAll(): Flow<List<Transaction>> = emptyFlow()
         override fun observeInRange(startInclusive: Instant, endExclusive: Instant): Flow<List<Transaction>> = emptyFlow()
     }

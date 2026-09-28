@@ -21,6 +21,12 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE id = :id")
     suspend fun getById(id: Long): TransactionEntity?
 
+    @Query("SELECT * FROM transactions WHERE source = :source AND externalReference = :externalReference LIMIT 1")
+    suspend fun getBySourceAndExternalReference(source: String, externalReference: String): TransactionEntity?
+
+    @Query("SELECT * FROM transactions WHERE source = :source AND occurredAt >= :startInclusive AND occurredAt <= :endInclusive")
+    suspend fun getBySourceInTimeRange(source: String, startInclusive: Long, endInclusive: Long): List<TransactionEntity>
+
     @Query("SELECT * FROM transactions ORDER BY occurredAt DESC, id DESC")
     fun observeAll(): Flow<List<TransactionEntity>>
 
