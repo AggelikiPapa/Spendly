@@ -49,6 +49,9 @@ import com.spendly.ui.settings.wallet.googleWalletTrackingViewModelFactory
 import com.spendly.ui.settings.merchantrules.MerchantRulesScreen
 import com.spendly.ui.settings.merchantrules.MerchantRulesViewModel
 import com.spendly.ui.settings.merchantrules.merchantRulesViewModelFactory
+import com.spendly.ui.settings.budgetalerts.BudgetNotificationSettingsScreen
+import com.spendly.ui.settings.budgetalerts.BudgetNotificationSettingsViewModel
+import com.spendly.ui.settings.budgetalerts.budgetNotificationSettingsViewModelFactory
 import com.spendly.ui.transactions.TransactionsScreen
 import com.spendly.ui.transactions.TransactionsViewModel
 import com.spendly.ui.transactions.transactionsViewModelFactory
@@ -198,8 +201,13 @@ fun SpendlyApp() {
                     viewModelStoreOwner = entry,
                     factory = googleWalletTrackingViewModelFactory(application.notificationAccessGateway),
                 )
+                val budgetNotificationsViewModel: BudgetNotificationSettingsViewModel = viewModel(
+                    viewModelStoreOwner = entry,
+                    factory = budgetNotificationSettingsViewModelFactory(application.budgetAlertStore, application.budgetAlertPermission),
+                )
                 SettingsScreen(
                     walletViewModel = walletViewModel,
+                    budgetNotificationsViewModel = budgetNotificationsViewModel,
                     contentPadding = innerPadding,
                     onOpenDestination = { destination ->
                         navController.navigate(destination.route) { launchSingleTop = true }
@@ -221,6 +229,16 @@ fun SpendlyApp() {
                     factory = monthlyBudgetViewModelFactory(application.monthlyBudgetRepository),
                 )
                 MonthlyBudgetScreen(viewModel, innerPadding) { navController.popBackStack() }
+            }
+            composable(SpendlyRoutes.BudgetNotifications) { entry ->
+                val application = LocalContext.current.applicationContext as SpendlyApplication
+                val viewModel: BudgetNotificationSettingsViewModel = viewModel(
+                    viewModelStoreOwner = entry,
+                    factory = budgetNotificationSettingsViewModelFactory(application.budgetAlertStore, application.budgetAlertPermission),
+                )
+                BudgetNotificationSettingsScreen(viewModel, application.budgetAlertPermission, innerPadding) {
+                    navController.popBackStack()
+                }
             }
             composable(SpendlyRoutes.Categories) { entry ->
                 val application = LocalContext.current.applicationContext as SpendlyApplication

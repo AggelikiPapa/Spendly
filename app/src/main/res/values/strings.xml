@@ -103,4 +103,18 @@
     <string name="delete_merchant_rule">Delete merchant rule?</string>
     <string name="delete_merchant_rule_message">Future purchases from this merchant will no longer be categorized automatically.</string>
     <string name="delete">Delete</string>
+    <string name="budget_notifications">Budget notifications</string>
+    <string name="budget_notifications_description" formatted="false">Warn me when confirmed spending reaches 70%, 80%, 90%, or 100% of this month’s budget. Each threshold is sent at most once per month.</string>
+    <string name="budget_notifications_enabled">Enabled</string>
+    <string name="budget_notifications_disabled">Disabled</string>
+    <string name="budget_notifications_permission_required">Permission required</string>
+    <string name="enable_budget_notifications">Enable budget notifications</string>
+    <string name="disable_budget_notifications">Disable budget notifications</string>
+    <string name="grant_budget_notification_permission">Allow Spendly notifications</string>
+    <string name="open_notification_settings">Open notification settings</string>
+    <string name="budget_alert_channel">Budget alerts</string>
+    <string name="budget_alert_used">You’ve used %1$s%% of your %2$s budget.</string>
+    <string name="budget_alert_reached">You’ve reached your %1$s budget.</string>
+    <string name="budget_alert_remaining">%1$s remaining.</string>
+    <string name="budget_alert_over">%1$s over budget.</string>
 </resources>

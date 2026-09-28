@@ -3,10 +3,9 @@ package com.spendly.ui.dashboard
 import com.spendly.domain.model.Money
 import com.spendly.domain.model.MonthlyBudget
 import com.spendly.domain.model.Transaction
-import com.spendly.domain.model.TransactionVisibility
+import com.spendly.domain.MonthlySpendingCalculator
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
@@ -44,14 +43,7 @@ object BudgetProgressCalculator {
         require(today.year == month.year && today.month == month.month) { "Date is outside dashboard month" }
         require(budget.limit.currencyCode == "EUR") { "Unsupported budget currency" }
 
-        val start: Instant = month.atDay(1).atStartOfDay(zone).toInstant()
-        val end: Instant = month.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant()
-        val spent = transactions.asSequence()
-            .filter { TransactionVisibility.inHistory(it) && it.type.countsTowardMonthlyBudget && it.occurredAt >= start && it.occurredAt < end }
-            .fold(Money(0, budget.limit.currencyCode)) { total, transaction ->
-                require(transaction.amount.amountMinor >= 0) { "Negative expense amount" }
-                total + transaction.amount
-            }
+        val spent = MonthlySpendingCalculator.spent(transactions, month, zone, budget.limit.currencyCode)
         val remaining = budget.limit - spent
         val percentage = when {
             budget.limit.amountMinor == 0L && spent.amountMinor == 0L -> BigDecimal.ZERO

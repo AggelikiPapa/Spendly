@@ -24,15 +24,20 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.spendly.R
 import com.spendly.ui.settings.wallet.GoogleWalletTrackingViewModel
+import com.spendly.ui.settings.budgetalerts.BudgetNotificationSettingsViewModel
+import com.spendly.ui.settings.budgetalerts.BudgetNotificationStatus
 
 @Composable
 fun SettingsScreen(
     walletViewModel: GoogleWalletTrackingViewModel,
+    budgetNotificationsViewModel: BudgetNotificationSettingsViewModel,
     contentPadding: PaddingValues,
     onOpenDestination: (SettingsDestination) -> Unit,
 ) {
     val walletState by walletViewModel.uiState.collectAsStateWithLifecycle()
+    val budgetNotificationState by budgetNotificationsViewModel.uiState.collectAsStateWithLifecycle()
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { walletViewModel.refreshAccess() }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { budgetNotificationsViewModel.refresh() }
     Column(modifier = Modifier.fillMaxSize().padding(contentPadding).verticalScroll(rememberScrollState())) {
         Text(
             text = stringResource(R.string.budget_section),
@@ -43,6 +48,16 @@ fun SettingsScreen(
             headlineContent = { Text(stringResource(R.string.monthly_spending_limit)) },
             trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
             modifier = Modifier.fillMaxWidth().clickable { onOpenDestination(SettingsDestination.MonthlyBudget) },
+        )
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.budget_notifications)) },
+            supportingContent = { Text(stringResource(when (budgetNotificationState.status) {
+                BudgetNotificationStatus.ENABLED -> R.string.budget_notifications_enabled
+                BudgetNotificationStatus.DISABLED -> R.string.budget_notifications_disabled
+                BudgetNotificationStatus.PERMISSION_REQUIRED -> R.string.budget_notifications_permission_required
+            })) },
+            trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth().clickable { onOpenDestination(SettingsDestination.BudgetNotifications) },
         )
         Text(
             text = stringResource(R.string.categories),
