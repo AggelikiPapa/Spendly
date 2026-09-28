@@ -1,6 +1,6 @@
 # Spendly
 
-Spendly is a local-first Android personal expense tracker. The project has Room-based local persistence, manual transaction management, category management, and a current-month budget dashboard. Automatic Google Wallet capture is planned.
+Spendly is a local-first Android personal expense tracker. The project has Room-based local persistence, manual transaction management, category management, and a current-month budget dashboard. It can detect notifications originating from Google Wallet for development verification; transaction parsing and import are planned.
 
 ## Technology
 
@@ -18,7 +18,7 @@ Spendly is a local-first Android personal expense tracker. The project has Room-
 - Current-month EUR spending-limit configuration through Settings
 - Dashboard showing the monthly limit, expense spending, remaining budget, percentage used, daily allowance, and recent transactions
 - Spending pace showing expected spending by today, above/on/below-plan status, and the signed difference from plan
-- Notification-listener access setup for future Google Wallet transaction detection
+- Notification-listener access and in-memory capture of Google Wallet notification text fields
 
 ## Planned capabilities
 
@@ -35,7 +35,7 @@ Settings → Categories shows active and inactive categories. Users can add and 
 
 Settings → Monthly spending limit lets users set or update the current calendar month's EUR limit. The Dashboard compares it with current-month expenses, shows remaining budget and a daily allowance, and previews recent transactions. It also compares actual spending with the expected amount through today, using the larger of 5% of expected spending or €5 as the on-pace tolerance. Income and transfers do not consume the spending limit. Notification-based budget warnings and automatic Google Wallet tracking are not implemented.
 
-Settings > Google Wallet tracking shows whether Android notification-listener access is enabled and opens the system settings where the user can grant or revoke it. Spendly registers a minimal listener service, but it does not inspect, parse, store, or import Google Wallet notifications yet. Notification processing will remain local on the device.
+Settings > Google Wallet tracking shows whether Android notification-listener access is enabled and opens the system settings where the user can grant or revoke it. The listener accepts notifications from `com.google.android.apps.walletnfcrel`, extracts available title, text, sub-text, and expanded text into an in-memory capture, and ignores other packages. Debug builds log those raw fields under `SpendlyWalletCapture` so the notification format can be checked on a phone. Release builds do not log them. Spendly does not parse, store, or import Wallet notifications or create transactions from them yet; the actual field structure must be verified on a device.
 
 ## Build
 
