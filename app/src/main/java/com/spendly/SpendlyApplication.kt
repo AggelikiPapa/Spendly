@@ -20,9 +20,8 @@ import com.spendly.budget.alerts.SharedPreferencesBudgetAlertStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
-import androidx.glance.appwidget.updateAll
-import com.spendly.widget.SpendlyBudgetWidget
+import com.spendly.widget.AndroidBudgetWidgetUpdater
+import com.spendly.widget.BudgetWidgetUpdateCoordinator
 
 class SpendlyApplication : Application() {
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -34,13 +33,14 @@ class SpendlyApplication : Application() {
         BudgetAlertCoordinator(transactionRepository, monthlyBudgetRepository, budgetAlertStore,
             budgetAlertPermission, AndroidBudgetAlertSender(this))
     }
+    private val budgetWidgetUpdateCoordinator by lazy {
+        BudgetWidgetUpdateCoordinator(transactionRepository, monthlyBudgetRepository, AndroidBudgetWidgetUpdater(this))
+    }
 
     override fun onCreate() {
         super.onCreate()
         budgetAlertCoordinator.start(applicationScope)
-        applicationScope.launch {
-            runCatching { SpendlyBudgetWidget().updateAll(this@SpendlyApplication) }
-        }
+        budgetWidgetUpdateCoordinator.start(applicationScope)
     }
 
     val transactionRepository: TransactionRepository by lazy {
