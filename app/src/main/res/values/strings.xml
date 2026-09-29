@@ -117,4 +117,10 @@
     <string name="budget_alert_reached">You’ve reached your %1$s budget.</string>
     <string name="budget_alert_remaining">%1$s remaining.</string>
     <string name="budget_alert_over">%1$s over budget.</string>
+    <string name="spending_pace_alerts">Spending pace alerts</string>
+    <string name="budget_threshold_alerts">Threshold alerts</string>
+    <string name="budget_threshold_alerts_description" formatted="false">70%, 80%, 90%, and 100% of the monthly budget</string>
+    <string name="spending_pace_alerts_description">Warn me when confirmed spending is meaningfully ahead of today’s budget target, at most once per day.</string>
+    <string name="spending_pace_alert_title">You’re spending faster than planned.</string>
+    <string name="spending_pace_alert_ahead">%1$s ahead of today’s target.</string>
 </resources>

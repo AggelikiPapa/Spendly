@@ -6,6 +6,7 @@ import com.spendly.domain.repository.MonthlyBudgetRepository
 import com.spendly.domain.repository.TransactionRepository
 import java.time.Clock
 import java.time.Duration
+import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -29,15 +30,17 @@ class BudgetAlertCoordinator(
     private val clock: Clock = Clock.systemDefaultZone(),
 ) {
     private val mutex = Mutex()
+    private var suppressedPaceDate: LocalDate? = null
 
     fun start(scope: CoroutineScope) = scope.launch {
-        monthFlow().flatMapLatest { month ->
-            combine(transactions.observeAll(), budgets.observeByMonth(month), store.enabled) { all, budget, _ ->
-                Snapshot(month, all, budget)
+        dateFlow().flatMapLatest { today ->
+            val month = YearMonth.from(today)
+            combine(transactions.observeAll(), budgets.observeByMonth(month), store.enabled, store.paceEnabled) { all, budget, _, _ ->
+                Snapshot(month, today, all, budget)
             }
         }.collect { snapshot ->
             try {
-                evaluate(snapshot.month, snapshot.transactions, snapshot.budget)
+                evaluate(snapshot.month, snapshot.transactions, snapshot.budget, snapshot.today)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
@@ -46,23 +49,49 @@ class BudgetAlertCoordinator(
         }
     }
 
-    suspend fun evaluate(month: YearMonth, allTransactions: List<Transaction>, budget: MonthlyBudget?) = mutex.withLock {
+    suspend fun evaluate(
+        month: YearMonth,
+        allTransactions: List<Transaction>,
+        budget: MonthlyBudget?,
+        today: LocalDate = LocalDate.now(clock),
+    ) = mutex.withLock {
         if (!store.isEnabled() || !permission.canPost()) return@withLock
-        val decision = BudgetThresholdEvaluator.evaluate(month, budget, allTransactions, store.delivered(month), clock.zone)
-            ?: return@withLock
-        // Persist every newly crossed threshold before posting only the highest one.
-        if (!store.markDelivered(month, decision.newlyCrossed)) return@withLock
-        sender.send(month, decision)
+        val threshold = BudgetThresholdEvaluator.evaluate(month, budget, allTransactions, store.delivered(month), clock.zone)
+        if (threshold != null) {
+            // Persist every newly crossed threshold before posting only the highest one.
+            if (!store.markDelivered(month, threshold.newlyCrossed)) return@withLock
+            // A threshold owns this day when pace is also above target. Later changes cannot add a second alert.
+            val alsoAbovePace = runCatching {
+                store.isPaceEnabled() &&
+                    SpendingPaceAlertEvaluator.evaluate(month, today, budget, allTransactions, clock.zone) != null
+            }.getOrDefault(false)
+            if (alsoAbovePace) {
+                suppressedPaceDate = today
+                runCatching { store.markPaceAlertDate(today) }
+            }
+            sender.send(month, threshold)
+            return@withLock
+        }
+        if (!store.isPaceEnabled() || suppressedPaceDate == today || store.lastPaceAlertDate() == today) return@withLock
+        val pace = SpendingPaceAlertEvaluator.evaluate(month, today, budget, allTransactions, clock.zone) ?: return@withLock
+        if (!store.markPaceAlertDate(today)) return@withLock
+        suppressedPaceDate = today
+        sender.sendPace(pace)
     }
 
-    private fun monthFlow() = flow {
+    private fun dateFlow() = flow {
         while (true) {
-            val month = YearMonth.now(clock)
-            emit(month)
-            val nextMonth = month.plusMonths(1).atDay(1).atStartOfDay(clock.zone).toInstant()
-            delay(Duration.between(clock.instant(), nextMonth).toMillis().coerceAtLeast(1L))
+            val today = LocalDate.now(clock)
+            emit(today)
+            val tomorrow = today.plusDays(1).atStartOfDay(clock.zone).toInstant()
+            delay(Duration.between(clock.instant(), tomorrow).toMillis().coerceAtLeast(1L))
         }
     }
 
-    private data class Snapshot(val month: YearMonth, val transactions: List<Transaction>, val budget: MonthlyBudget?)
+    private data class Snapshot(
+        val month: YearMonth,
+        val today: LocalDate,
+        val transactions: List<Transaction>,
+        val budget: MonthlyBudget?,
+    )
 }

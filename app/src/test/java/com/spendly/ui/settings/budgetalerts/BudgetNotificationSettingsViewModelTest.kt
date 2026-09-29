@@ -4,6 +4,7 @@ import com.spendly.budget.alerts.BudgetAlertPermission
 import com.spendly.budget.alerts.BudgetAlertStore
 import com.spendly.budget.alerts.BudgetThreshold
 import java.time.YearMonth
+import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,17 +42,28 @@ class BudgetNotificationSettingsViewModelTest {
         vm.enable()
         assertTrue(store.isEnabled())
         assertEquals(BudgetNotificationStatus.ENABLED, vm.uiState.value.status)
+        vm.setPaceEnabled(true)
+        assertTrue(store.isPaceEnabled())
+        assertTrue(vm.uiState.value.paceEnabled)
         vm.disable()
         assertEquals(BudgetNotificationStatus.DISABLED, vm.uiState.value.status)
+        vm.setPaceEnabled(false)
+        assertTrue(store.isPaceEnabled()) // Disabled master does not silently change the pace preference.
     }
 
     private class FakeStore : BudgetAlertStore {
         private val state = MutableStateFlow(false)
+        private val paceState = MutableStateFlow(false)
         override val enabled = state
+        override val paceEnabled = paceState
         override fun isEnabled() = state.value
         override fun setEnabled(enabled: Boolean): Boolean { state.value = enabled; return true }
+        override fun isPaceEnabled() = paceState.value
+        override fun setPaceEnabled(enabled: Boolean): Boolean { paceState.value = enabled; return true }
         override fun delivered(month: YearMonth): Set<BudgetThreshold> = emptySet()
         override fun markDelivered(month: YearMonth, thresholds: Set<BudgetThreshold>) = true
+        override fun lastPaceAlertDate(): LocalDate? = null
+        override fun markPaceAlertDate(date: LocalDate) = true
     }
 
     private class FakePermission : BudgetAlertPermission {

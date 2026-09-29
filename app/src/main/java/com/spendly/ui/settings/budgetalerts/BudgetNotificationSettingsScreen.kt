@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -18,6 +20,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,7 +56,8 @@ fun BudgetNotificationSettingsScreen(
     }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
 
-    Column(modifier = Modifier.fillMaxSize().padding(contentPadding).padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+    Column(modifier = Modifier.fillMaxSize().padding(contentPadding).verticalScroll(rememberScrollState()).padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back)) }
             Text(stringResource(R.string.budget_notifications), style = MaterialTheme.typography.headlineSmall)
@@ -77,6 +81,19 @@ fun BudgetNotificationSettingsScreen(
             }, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(if (requestDenied) R.string.open_notification_settings else R.string.grant_budget_notification_permission))
             }
+        }
+        Text(stringResource(R.string.budget_threshold_alerts), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.budget_threshold_alerts_description))
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.spending_pace_alerts), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.spending_pace_alerts_description), style = MaterialTheme.typography.bodySmall)
+            }
+            Switch(
+                checked = state.paceEnabled,
+                onCheckedChange = viewModel::setPaceEnabled,
+                enabled = state.status == BudgetNotificationStatus.ENABLED,
+            )
         }
         state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }

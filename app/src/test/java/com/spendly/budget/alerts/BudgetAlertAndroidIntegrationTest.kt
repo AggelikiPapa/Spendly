@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.spendly.MainActivity
 import java.time.YearMonth
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -29,9 +30,13 @@ class BudgetAlertAndroidIntegrationTest {
         val september = YearMonth.of(2026, 9)
         assertFalse(first.isEnabled())
         assertTrue(first.setEnabled(true))
+        assertTrue(first.setPaceEnabled(true))
         assertTrue(first.markDelivered(september, setOf(BudgetThreshold.SEVENTY, BudgetThreshold.EIGHTY)))
+        assertTrue(first.markPaceAlertDate(LocalDate.of(2026, 9, 28)))
         val reloaded = SharedPreferencesBudgetAlertStore(context)
         assertTrue(reloaded.isEnabled())
+        assertTrue(reloaded.isPaceEnabled())
+        assertEquals(LocalDate.of(2026, 9, 28), reloaded.lastPaceAlertDate())
         assertEquals(setOf(BudgetThreshold.SEVENTY, BudgetThreshold.EIGHTY), reloaded.delivered(september))
         assertTrue(reloaded.delivered(september.plusMonths(1)).isEmpty())
     }

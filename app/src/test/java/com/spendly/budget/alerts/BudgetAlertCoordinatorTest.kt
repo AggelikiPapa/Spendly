@@ -10,8 +10,10 @@ import com.spendly.domain.repository.MonthlyBudgetRepository
 import com.spendly.domain.repository.TransactionRepository
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneOffset
+import java.time.ZoneId
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
@@ -106,21 +108,113 @@ class BudgetAlertCoordinatorTest {
         assertEquals(BudgetThreshold.NINETY, sender.sent.last().highest)
     }
 
+    @Test fun paceSendsOncePerLocalDayAndMaySendAgainTomorrow() = runTest {
+        store.paceEnabledState.value = true
+        val today = LocalDate.of(2026, 9, 15)
+        coordinator.evaluate(month, listOf(expense(6_000)), budget, today)
+        assertEquals(1, sender.paceSent.size)
+        assertEquals(Money(1_000, "EUR"), sender.paceSent.single().aheadOfTarget)
+        coordinator.evaluate(month, listOf(expense(6_500)), budget, today)
+        assertEquals(1, sender.paceSent.size)
+        coordinator.evaluate(month, listOf(expense(6_000)), budget, today.plusDays(1))
+        assertEquals(2, sender.paceSent.size)
+        assertEquals(today.plusDays(1), store.paceDate)
+    }
+
+    @Test fun concurrentPaceEvaluationsSendOnce() = runTest {
+        store.paceEnabledState.value = true
+        (1..20).map { async { coordinator.evaluate(month, listOf(expense(6_000)), budget) } }.awaitAll()
+        assertEquals(1, sender.paceSent.size)
+    }
+
+    @Test fun thresholdTakesPriorityAndSuppressesPaceForRestOfDay() = runTest {
+        store.paceEnabledState.value = true
+        val today = LocalDate.of(2026, 9, 15)
+        coordinator.evaluate(month, listOf(expense(7_100)), budget, today)
+        assertEquals(listOf(BudgetThreshold.SEVENTY), sender.sent.map { it.highest })
+        assertTrue(sender.paceSent.isEmpty())
+        assertEquals(today, store.paceDate)
+        coordinator.evaluate(month, listOf(expense(7_200)), budget, today)
+        assertTrue(sender.paceSent.isEmpty())
+        coordinator.evaluate(month, listOf(expense(7_200)), budget, today.plusDays(1))
+        assertEquals(1, sender.paceSent.size)
+    }
+
+    @Test fun paceRespectsSubtoggleMasterPermissionAndDurableWriteFailure() = runTest {
+        val spending = listOf(expense(6_000))
+        coordinator.evaluate(month, spending, budget)
+        assertTrue(sender.paceSent.isEmpty())
+        store.paceEnabledState.value = true
+        store.enabledState.value = false
+        coordinator.evaluate(month, spending, budget)
+        assertTrue(sender.paceSent.isEmpty())
+        store.enabledState.value = true
+        permission.granted = false
+        coordinator.evaluate(month, spending, budget)
+        assertTrue(sender.paceSent.isEmpty())
+        permission.granted = true
+        store.persist = false
+        coordinator.evaluate(month, spending, budget)
+        assertTrue(sender.paceSent.isEmpty())
+        assertEquals(null, store.paceDate)
+    }
+
+    @Test fun deletingSpendingDoesNotResetSameDayDelivery() = runTest {
+        store.paceEnabledState.value = true
+        coordinator.evaluate(month, listOf(expense(6_000)), budget)
+        coordinator.evaluate(month, emptyList(), budget)
+        coordinator.evaluate(month, listOf(expense(6_000)), budget)
+        assertEquals(1, sender.paceSent.size)
+    }
+
+    @Test fun zeroBudgetUsesOnlyThresholdAlertEvenOnLaterDay() = runTest {
+        store.paceEnabledState.value = true
+        val zero = MonthlyBudget(month, Money(0, "EUR"))
+        coordinator.evaluate(month, emptyList(), zero)
+        assertTrue(sender.sent.isEmpty())
+        coordinator.evaluate(month, listOf(expense(1)), zero)
+        assertEquals(BudgetThreshold.ONE_HUNDRED, sender.sent.single().highest)
+        assertTrue(sender.paceSent.isEmpty())
+        coordinator.evaluate(month, listOf(expense(1)), zero, LocalDate.of(2026, 9, 16))
+        assertTrue(sender.paceSent.isEmpty())
+    }
+
+    @Test fun paceDateUsesClockLocalZoneInsteadOfUtc() = runTest {
+        store.paceEnabledState.value = true
+        val tokyoClock = Clock.fixed(Instant.parse("2026-09-15T15:30:00Z"), ZoneId.of("Asia/Tokyo"))
+        val tokyoCoordinator = BudgetAlertCoordinator(transactions, budgets, store, permission, sender, tokyoClock)
+        val at = Instant.parse("2026-09-15T15:30:00Z")
+        tokyoCoordinator.evaluate(month, listOf(expense(6_000, at)), budget)
+        assertEquals(LocalDate.of(2026, 9, 16), store.paceDate)
+        assertEquals(1, sender.paceSent.size)
+    }
+
     private fun expense(amount: Long, at: Instant = Instant.parse("2026-09-15T12:00:00Z")) =
         Transaction(0, Money(amount, "EUR"), TransactionType.EXPENSE, "Shop", null, null, at,
             TransactionSource.MANUAL, ImportStatus.CONFIRMED, null, null, null, at, at)
 
     private class FakeStore : BudgetAlertStore {
         val enabledState = MutableStateFlow(true)
+        val paceEnabledState = MutableStateFlow(false)
         override val enabled: Flow<Boolean> = enabledState
+        override val paceEnabled: Flow<Boolean> = paceEnabledState
         val byMonth = mutableMapOf<YearMonth, Set<BudgetThreshold>>()
+        var paceDate: LocalDate? = null
         var persist = true
         override fun isEnabled() = enabledState.value
         override fun setEnabled(enabled: Boolean): Boolean { enabledState.value = enabled; return true }
+        override fun isPaceEnabled() = paceEnabledState.value
+        override fun setPaceEnabled(enabled: Boolean): Boolean { paceEnabledState.value = enabled; return true }
         override fun delivered(month: YearMonth) = byMonth[month].orEmpty()
         override fun markDelivered(month: YearMonth, thresholds: Set<BudgetThreshold>): Boolean {
             if (!persist) return false
             byMonth[month] = delivered(month) + thresholds
+            return true
+        }
+        override fun lastPaceAlertDate() = paceDate
+        override fun markPaceAlertDate(date: LocalDate): Boolean {
+            if (!persist) return false
+            paceDate = date
             return true
         }
     }
@@ -132,7 +226,9 @@ class BudgetAlertCoordinatorTest {
 
     private class FakeSender : BudgetAlertSender {
         val sent = mutableListOf<BudgetAlertDecision>()
+        val paceSent = mutableListOf<SpendingPaceAlertDecision>()
         override fun send(month: YearMonth, decision: BudgetAlertDecision) { sent += decision }
+        override fun sendPace(decision: SpendingPaceAlertDecision) { paceSent += decision }
     }
 
     private class UnusedTransactions : TransactionRepository {
