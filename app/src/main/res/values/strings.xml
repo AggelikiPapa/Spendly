@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Spendly</string>
+    <string name="budget_widget_description">Current monthly budget usage</string>
     <string name="dashboard">Dashboard</string>
     <string name="transactions">Transactions</string>
     <string name="review">Review</string>
