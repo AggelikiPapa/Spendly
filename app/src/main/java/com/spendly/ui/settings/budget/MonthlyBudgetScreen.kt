@@ -26,7 +26,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.spendly.R
-import java.math.BigDecimal
+import com.spendly.ui.transactions.MoneyDisplayFormatter
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -37,8 +39,8 @@ fun MonthlyBudgetScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     Column(
-        modifier = Modifier.fillMaxSize().padding(contentPadding).padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        modifier = Modifier.fillMaxSize().padding(contentPadding).verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
@@ -56,8 +58,7 @@ fun MonthlyBudgetScreen(
                 )
                 current.currentLimit?.let { limit ->
                     Text(
-                        stringResource(R.string.current_spending_limit) + " €" +
-                            BigDecimal.valueOf(limit.amountMinor, 2).toPlainString(),
+                        stringResource(R.string.current_spending_limit) + " " + MoneyDisplayFormatter.formatAmount(limit),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }

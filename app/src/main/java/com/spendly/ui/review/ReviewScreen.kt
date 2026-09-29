@@ -32,11 +32,12 @@ fun ReviewScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     Column(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
-        Text(stringResource(R.string.needs_review), modifier = Modifier.padding(24.dp), style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.review_intro), modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            style = MaterialTheme.typography.bodyMedium)
         when {
-            state.isLoading -> CircularProgressIndicator(modifier = Modifier.padding(24.dp))
-            state.error != null -> Text(state.error!!, modifier = Modifier.padding(24.dp))
-            state.rows.isEmpty() -> Text(stringResource(R.string.no_review_transactions), modifier = Modifier.padding(24.dp))
+            state.isLoading -> CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+            state.error != null -> Text(state.error!!, modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error)
+            state.rows.isEmpty() -> Text(stringResource(R.string.no_review_transactions), modifier = Modifier.padding(16.dp))
             else -> LazyColumn {
                 items(state.rows, key = { it.transaction.id }) { row ->
                     val transaction = row.transaction
@@ -47,8 +48,9 @@ fun ReviewScreen(
                         supportingContent = {
                             Text(listOfNotNull(stringResource(R.string.needs_review), row.categoryName, date).joinToString(" | "))
                         },
-                        trailingContent = { Text(MoneyDisplayFormatter.format(transaction)) },
-                        modifier = Modifier.clickable { onOpenTransaction(transaction.id) },
+                        trailingContent = { Text(MoneyDisplayFormatter.format(transaction),
+                            style = MaterialTheme.typography.titleMedium) },
+                        modifier = Modifier.padding(horizontal = 8.dp).clickable { onOpenTransaction(transaction.id) },
                     )
                     HorizontalDivider()
                 }

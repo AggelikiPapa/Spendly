@@ -38,16 +38,18 @@ fun SettingsScreen(
     val budgetNotificationState by budgetNotificationsViewModel.uiState.collectAsStateWithLifecycle()
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { walletViewModel.refreshAccess() }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { budgetNotificationsViewModel.refresh() }
-    Column(modifier = Modifier.fillMaxSize().padding(contentPadding).verticalScroll(rememberScrollState())) {
+    Column(modifier = Modifier.fillMaxSize().padding(contentPadding).verticalScroll(rememberScrollState())
+        .padding(bottom = 24.dp)) {
         Text(
             text = stringResource(R.string.budget_section),
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 8.dp),
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp),
         )
         ListItem(
             headlineContent = { Text(stringResource(R.string.monthly_spending_limit)) },
+            supportingContent = { Text(stringResource(R.string.monthly_spending_limit_summary)) },
             trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth().clickable { onOpenDestination(SettingsDestination.MonthlyBudget) },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).clickable { onOpenDestination(SettingsDestination.MonthlyBudget) },
         )
         ListItem(
             headlineContent = { Text(stringResource(R.string.budget_notifications)) },
@@ -57,23 +59,29 @@ fun SettingsScreen(
                 BudgetNotificationStatus.PERMISSION_REQUIRED -> R.string.budget_notifications_permission_required
             })) },
             trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth().clickable { onOpenDestination(SettingsDestination.BudgetNotifications) },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).clickable { onOpenDestination(SettingsDestination.BudgetNotifications) },
         )
         Text(
-            text = stringResource(R.string.categories),
+            text = stringResource(R.string.transactions),
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 8.dp),
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp),
         )
         ListItem(
             headlineContent = { Text(stringResource(R.string.categories)) },
             supportingContent = { Text(stringResource(R.string.manage_categories)) },
             trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth().clickable { onOpenDestination(SettingsDestination.Categories) },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).clickable { onOpenDestination(SettingsDestination.Categories) },
+        )
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.merchant_rules)) },
+            supportingContent = { Text(stringResource(R.string.merchant_rules_summary)) },
+            trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).clickable { onOpenDestination(SettingsDestination.MerchantRules) },
         )
         Text(
             text = stringResource(R.string.automatic_transaction_tracking),
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 8.dp),
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp),
         )
         ListItem(
             headlineContent = { Text(stringResource(R.string.google_wallet_tracking)) },
@@ -84,18 +92,7 @@ fun SettingsScreen(
                 ))
             },
             trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth().clickable { onOpenDestination(SettingsDestination.GoogleWalletTracking) },
-        )
-        Text(
-            text = stringResource(R.string.automation),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 8.dp),
-        )
-        ListItem(
-            headlineContent = { Text(stringResource(R.string.merchant_rules)) },
-            supportingContent = { Text(stringResource(R.string.merchant_rules_summary)) },
-            trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth().clickable { onOpenDestination(SettingsDestination.MerchantRules) },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).clickable { onOpenDestination(SettingsDestination.GoogleWalletTracking) },
         )
     }
 }

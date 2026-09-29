@@ -64,7 +64,7 @@ fun TransactionsScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     Column(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(24.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -74,7 +74,7 @@ fun TransactionsScreen(
             }
         }
 
-        TextButton(onClick = onReviewTransactions, modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)) {
+        TextButton(onClick = onReviewTransactions, modifier = Modifier.padding(start = 8.dp)) {
             Text(if (state.reviewCount > 0) stringResource(R.string.needs_review_count, state.reviewCount) else stringResource(R.string.needs_review))
         }
 
@@ -145,11 +145,11 @@ fun TransactionsScreen(
         }
 
         if (state.filters.hasActiveFilters) {
-            TextButton(onClick = viewModel::clearFilters, modifier = Modifier.padding(start = 16.dp)) {
+            TextButton(onClick = viewModel::clearFilters, modifier = Modifier.padding(start = 8.dp)) {
                 Text(stringResource(R.string.clear_filters))
             }
         } else {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(4.dp))
         }
 
         when {
@@ -237,6 +237,6 @@ private fun TransactionHistoryRow(row: TransactionRow, onClick: () -> Unit) {
                 color = amountColor,
             )
         },
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = Modifier.padding(horizontal = 8.dp).clickable(onClick = onClick),
     )
 }

@@ -41,10 +41,10 @@ fun ReviewTransactionScreen(
     LaunchedEffect(viewModel) { viewModel.completedEvents.collect { onBack() } }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(contentPadding).verticalScroll(rememberScrollState()).padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        modifier = Modifier.fillMaxSize().padding(contentPadding).verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(stringResource(R.string.review_transaction), style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.review_intro), style = MaterialTheme.typography.bodyMedium)
         when (val current = state) {
             ReviewTransactionUiState.Loading -> CircularProgressIndicator()
             ReviewTransactionUiState.NotFound -> Text(stringResource(R.string.transaction_not_found))

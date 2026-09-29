@@ -35,7 +35,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.spendly.R
 import com.spendly.domain.model.Money
@@ -53,7 +54,7 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel, contentPadding: PaddingValues
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LazyColumn(
         modifier = Modifier.padding(contentPadding),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 28.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item { MonthSelector(month, viewModel.canGoNext(), viewModel::previousMonth, viewModel::nextMonth) }
@@ -82,7 +83,9 @@ private fun MonthSelector(month: YearMonth, canNext: Boolean, previous: () -> Un
         IconButton(onClick = previous) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.analytics_previous_month))
         }
-        Text(month.atDay(1).format(DateTimeFormatter.ofPattern("LLLL yyyy")), style = MaterialTheme.typography.titleLarge)
+        Text(month.atDay(1).format(DateTimeFormatter.ofPattern("LLLL yyyy")),
+            modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center, style = MaterialTheme.typography.titleLarge)
         IconButton(onClick = next, enabled = canNext) {
             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.analytics_next_month))
         }
@@ -118,7 +121,8 @@ private fun CategoryCard(summary: AnalyticsSummary) {
             Text(stringResource(R.string.analytics_by_category), style = MaterialTheme.typography.titleMedium)
             summary.categories.forEach { category ->
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(category.name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                    Text(category.name, modifier = Modifier.weight(1f).padding(end = 8.dp),
+                        style = MaterialTheme.typography.bodyMedium)
                     Text(MoneyDisplayFormatter.formatAmount(category.amount), style = MaterialTheme.typography.bodyMedium)
                 }
                 val fraction = category.percentage.divide(BigDecimal(100)).toFloat().coerceIn(0f, 1f)
@@ -156,8 +160,9 @@ private fun DailyCard(summary: AnalyticsSummary) {
                             .background(if (day.amount.amountMinor == 0L) MaterialTheme.colorScheme.surfaceVariant
                                 else MaterialTheme.colorScheme.primary))
                         Spacer(Modifier.height(5.dp))
-                        Text(day.date.dayOfMonth.toString(), fontSize = 10.sp)
-                        Text(MoneyDisplayFormatter.formatAmount(day.amount), fontSize = 10.sp, maxLines = 1)
+                        Text(day.date.dayOfMonth.toString(), style = MaterialTheme.typography.labelSmall)
+                        Text(MoneyDisplayFormatter.formatAmount(day.amount),
+                            style = MaterialTheme.typography.labelSmall, maxLines = 1)
                     }
                 }
             }
@@ -171,10 +176,11 @@ private fun LargestCard(summary: AnalyticsSummary) {
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.analytics_largest_expenses), style = MaterialTheme.typography.titleMedium)
             summary.largest.forEach { expense ->
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(expense.transaction.merchant?.takeIf { it.isNotBlank() }
-                            ?: stringResource(R.string.expense), style = MaterialTheme.typography.bodyMedium)
+                            ?: stringResource(R.string.expense), style = MaterialTheme.typography.titleSmall)
                         Text("${expense.categoryName} · ${expense.date.format(DateTimeFormatter.ofPattern("d MMM"))}",
                             style = MaterialTheme.typography.bodySmall)
                     }

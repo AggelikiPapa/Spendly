@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.spendly.R
 import com.spendly.domain.model.TransactionType
@@ -59,7 +60,7 @@ fun TransactionForm(
         runCatching { Currency.getInstance(values.currencyCode).symbol }.getOrDefault(values.currencyCode)
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         OutlinedTextField(
             value = values.amountInput,
             onValueChange = onAmountChanged,
@@ -110,7 +111,8 @@ fun TransactionForm(
                     enabled = enabled && values.categories.isNotEmpty(),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(selectedName ?: stringResource(R.string.choose_category))
+                    Text(selectedName ?: stringResource(R.string.choose_category),
+                        modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                 }
                 DropdownMenu(

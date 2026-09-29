@@ -13,7 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,7 +42,7 @@ fun CategoryManagementScreen(
     val busy = state.busyCategoryId != null || state.editor?.isSaving == true
     Column(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 24.dp, top = 16.dp, bottom = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 12.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -53,9 +52,8 @@ fun CategoryManagementScreen(
                 }
                 Text(stringResource(R.string.categories), style = MaterialTheme.typography.headlineSmall)
             }
-            Button(onClick = viewModel::startAdd, enabled = !busy && !state.isLoading && state.loadError == null) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Text(stringResource(R.string.add_category))
+            IconButton(onClick = viewModel::startAdd, enabled = !busy && !state.isLoading && state.loadError == null) {
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_category))
             }
         }
         state.operationError?.let {

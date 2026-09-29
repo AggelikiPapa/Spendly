@@ -47,7 +47,7 @@ fun DashboardScreen(
         is DashboardUiState.Error -> Text(
             current.message,
             color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.padding(contentPadding).padding(24.dp),
+            modifier = Modifier.padding(contentPadding).padding(16.dp),
         )
         is DashboardUiState.Ready -> LazyColumn(
             modifier = Modifier.fillMaxSize().padding(contentPadding),
@@ -58,7 +58,7 @@ fun DashboardScreen(
                 Text(
                     current.month.atDay(1).format(DateTimeFormatter.ofPattern("LLLL yyyy")),
                     style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 24.dp),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp),
                 )
             }
             item {
@@ -70,12 +70,12 @@ fun DashboardScreen(
                 }
             }
             if (current.progress != null) {
-                item { SpendingPaceCard(current.progress.spendingPace, current.progress.spent) }
                 item { DailyAllowanceCard(current.progress) }
+                item { SpendingPaceCard(current.progress.spendingPace, current.progress.spent) }
             }
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -84,7 +84,7 @@ fun DashboardScreen(
                 }
             }
             if (current.recentTransactions.isEmpty()) {
-                item { Text(stringResource(R.string.no_transactions), modifier = Modifier.padding(horizontal = 24.dp)) }
+                item { Text(stringResource(R.string.no_transactions), modifier = Modifier.padding(horizontal = 16.dp)) }
             } else {
                 items(current.recentTransactions, key = { it.transaction.id }) { row -> RecentTransactionRow(row) }
             }
@@ -94,19 +94,20 @@ fun DashboardScreen(
 
 @Composable
 private fun SpendingPaceCard(pace: SpendingPace, actualSpent: Money) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.spending_pace), style = MaterialTheme.typography.titleMedium)
             Text(stringResource(when (pace.status) {
                 SpendingPaceStatus.BELOW_PACE -> R.string.below_planned_pace
                 SpendingPaceStatus.ON_PACE -> R.string.on_planned_pace
                 SpendingPaceStatus.ABOVE_PACE -> R.string.above_planned_pace
-            }))
+            }), style = MaterialTheme.typography.bodyMedium)
             Text(stringResource(
                 R.string.expected_by_today,
                 MoneyDisplayFormatter.formatAmount(pace.expectedSpentByToday),
-            ))
-            Text(stringResource(R.string.actual_spending, MoneyDisplayFormatter.formatAmount(actualSpent)))
+            ), style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.actual_spending, MoneyDisplayFormatter.formatAmount(actualSpent)),
+                style = MaterialTheme.typography.bodySmall)
             when (pace.status) {
                 SpendingPaceStatus.ABOVE_PACE -> Text(stringResource(
                     R.string.ahead_of_target,
@@ -124,9 +125,9 @@ private fun SpendingPaceCard(pace: SpendingPace, actualSpent: Money) {
 
 @Composable
 private fun NoBudgetCard(onConfigureBudget: () -> Unit) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(stringResource(R.string.no_monthly_budget), style = MaterialTheme.typography.titleLarge)
@@ -144,9 +145,9 @@ private fun BudgetCard(progress: BudgetProgress) {
     val visualProgress = progress.percentageUsed?.divide(BigDecimal(100))?.toFloat()?.coerceIn(0f, 1f)
         ?: if (progress.spent.amountMinor > 0L) 1f else 0f
 
-    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(stringResource(R.string.monthly_budget), style = MaterialTheme.typography.titleMedium)
@@ -159,6 +160,7 @@ private fun BudgetCard(progress: BudgetProgress) {
             Text(
                 if (percentageLabel == null) stringResource(R.string.limit_exceeded)
                 else stringResource(R.string.budget_used, percentageLabel),
+                style = MaterialTheme.typography.titleLarge,
             )
             Text(
                 if (remaining < 0L) {
@@ -166,7 +168,6 @@ private fun BudgetCard(progress: BudgetProgress) {
                 } else {
                     stringResource(R.string.remaining_amount, MoneyDisplayFormatter.formatAmount(progress.remaining))
                 },
-                color = if (remaining < 0L) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.titleMedium,
             )
         }
@@ -175,8 +176,8 @@ private fun BudgetCard(progress: BudgetProgress) {
 
 @Composable
 private fun DailyAllowanceCard(progress: BudgetProgress) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.daily_allowance), style = MaterialTheme.typography.titleMedium)
             Text(
                 stringResource(
@@ -205,7 +206,8 @@ private fun RecentTransactionRow(row: DashboardTransactionRow) {
     ListItem(
         headlineContent = { Text(merchant) },
         supportingContent = { Text(subtitle) },
-        trailingContent = { Text(MoneyDisplayFormatter.format(transaction)) },
+        trailingContent = { Text(MoneyDisplayFormatter.format(transaction),
+            style = MaterialTheme.typography.titleMedium) },
         modifier = Modifier.padding(horizontal = 8.dp),
     )
 }

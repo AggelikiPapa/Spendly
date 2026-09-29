@@ -2,6 +2,8 @@
 
 Spendly is a local-first Android personal expense tracker. The project has Room-based local persistence, manual transaction management, category management, and a current-month budget dashboard. It can detect Google Wallet notifications, parse purchase notifications, and automatically import successful purchases as expense transactions.
 
+The current personal-use V1 has received a UI and branding polish pass, including a teal Material 3 theme, clearer screen hierarchy, and a brand-consistent Android launch splash. The existing custom Spendly launcher artwork is retained.
+
 ## Technology
 
 - Kotlin, Jetpack Compose, and Material 3
