@@ -12,6 +12,7 @@ Spendly is a local-first Android personal expense tracker. The project has Room-
 - Room database and repository implementations for local storage
 - State-driven transaction entry and editing with shared validation and decimal-safe amount conversion
 - Reactive transaction history with category names and newest-first ordering
+- Transaction history search by merchant, description, or notes, with category, type, source, and month filters
 - Transaction deletion with confirmation
 - Settings-based category management with custom creation, custom renaming, and activation controls
 - Three primary bottom destinations: Dashboard, Transactions, and Analytics; Settings is available from Dashboard and Review from Transactions
@@ -31,6 +32,8 @@ The following are future plans and are **not implemented yet**:
 - Advanced analytics and custom date ranges
 
 The app stores transactions locally through Room. The Transactions screen shows confirmed history; tap a row to edit or delete it, or use Add transaction to create one. Changes appear in the list automatically. The optional label on the form is stored as `merchant`, while `description` remains null for manually created transactions. Editing retains the original transaction ID, source, import fields, notes, description, and creation time.
+
+Transactions defaults to the current device-local month. Use the month arrows to inspect earlier months; future months are unavailable. Search matches merchant, description, and notes after trimming, root-locale lowercasing, and collapsing repeated whitespace. Category (including Uncategorized and inactive historical categories), transaction type, and Manual/Google Wallet source filters combine with search. Clear filters restores the full selected-month list. Filtering happens in memory on the observed month, so typing does not query Room again.
 
 Settings → Categories shows active and inactive categories. Users can add and rename custom categories, and deactivate or reactivate any category. Built-in category names remain fixed; their built-in status is retained when their active state changes. Inactive categories stay on historical transactions but are omitted from new category choices. Categories cannot be permanently deleted. Category-specific budgets are not implemented.
 
