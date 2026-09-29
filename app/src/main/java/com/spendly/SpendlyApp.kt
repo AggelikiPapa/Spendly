@@ -25,6 +25,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.spendly.ui.analytics.AnalyticsScreen
+import com.spendly.ui.analytics.AnalyticsViewModel
+import com.spendly.ui.analytics.analyticsViewModelFactory
 import com.spendly.ui.dashboard.DashboardScreen
 import com.spendly.ui.dashboard.DashboardViewModel
 import com.spendly.ui.dashboard.dashboardViewModelFactory
@@ -194,7 +196,14 @@ fun SpendlyApp() {
                 )
                 ReviewTransactionScreen(viewModel, innerPadding) { navController.popBackStack() }
             }
-            composable(SpendlyDestination.Analytics.route) { AnalyticsScreen(innerPadding) }
+            composable(SpendlyDestination.Analytics.route) { entry ->
+                val application = LocalContext.current.applicationContext as SpendlyApplication
+                val viewModel: AnalyticsViewModel = viewModel(
+                    viewModelStoreOwner = entry,
+                    factory = analyticsViewModelFactory(application.transactionRepository, application.categoryRepository),
+                )
+                AnalyticsScreen(viewModel, innerPadding)
+            }
             composable(SpendlyDestination.Settings.route) { entry ->
                 val application = LocalContext.current.applicationContext as SpendlyApplication
                 val walletViewModel: GoogleWalletTrackingViewModel = viewModel(
