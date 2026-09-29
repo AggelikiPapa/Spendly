@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
@@ -87,7 +88,8 @@ fun ReviewTransactionScreen(
                 Button(onClick = viewModel::confirm, enabled = !current.isSaving, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(if (current.isSaving) R.string.saving else R.string.confirm))
                 }
-                OutlinedButton(onClick = viewModel::requestIgnore, enabled = !current.isSaving, modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = viewModel::requestIgnore, enabled = !current.isSaving, modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
                     Text(stringResource(R.string.ignore))
                 }
             }
@@ -100,7 +102,10 @@ fun ReviewTransactionScreen(
             onDismissRequest = viewModel::cancelIgnore,
             title = { Text(stringResource(R.string.ignore)) },
             text = { Text(stringResource(R.string.confirm_ignore_transaction)) },
-            confirmButton = { TextButton(onClick = viewModel::confirmIgnore) { Text(stringResource(R.string.ignore)) } },
+            confirmButton = { TextButton(onClick = viewModel::confirmIgnore,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
+                Text(stringResource(R.string.ignore))
+            } },
             dismissButton = { TextButton(onClick = viewModel::cancelIgnore) { Text(stringResource(R.string.cancel)) } },
         )
     }

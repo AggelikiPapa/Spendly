@@ -30,10 +30,20 @@ private val DarkColors = darkColorScheme(
 @Composable
 fun SpendlyTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    accentColor: AccentColor = AccentColor.Teal,
     content: @Composable () -> Unit,
 ) {
+    val accent = accentColor.palette(darkTheme)
     MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors,
+        colorScheme = (if (darkTheme) DarkColors else LightColors).copy(
+            primary = accent.primary,
+            onPrimary = accent.onPrimary,
+            primaryContainer = accent.primaryContainer,
+            onPrimaryContainer = accent.onPrimaryContainer,
+            secondaryContainer = accent.primaryContainer,
+            onSecondaryContainer = accent.onPrimaryContainer,
+            surfaceTint = accent.primary,
+        ),
         content = content,
     )
 }

@@ -6,6 +6,7 @@ import com.spendly.domain.model.Transaction
 import com.spendly.domain.model.TransactionType
 import com.spendly.domain.repository.MonthlyBudgetRepository
 import com.spendly.domain.repository.TransactionRepository
+import com.spendly.ui.theme.AccentColor
 import java.time.Clock
 import java.time.Duration
 import java.time.YearMonth
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 
@@ -36,6 +38,7 @@ class BudgetWidgetUpdateCoordinator(
     private val updater: BudgetWidgetUpdater,
     private val clock: Clock = Clock.systemDefaultZone(),
     private val months: Flow<YearMonth> = currentMonthFlow(clock),
+    private val accents: Flow<AccentColor> = flowOf(AccentColor.Teal),
 ) {
     private var observationJob: Job? = null
 
@@ -46,7 +49,7 @@ class BudgetWidgetUpdateCoordinator(
             months.flatMapLatest { month ->
                 val start = month.atDay(1).atStartOfDay(clock.zone).toInstant()
                 val end = month.plusMonths(1).atDay(1).atStartOfDay(clock.zone).toInstant()
-                combine(transactions.observeAll(), budgets.observeByMonth(month)) { all, budget ->
+                combine(transactions.observeAll(), budgets.observeByMonth(month), accents) { all, budget, accent ->
                     WidgetSnapshot(
                         month,
                         budget?.limit,
@@ -55,6 +58,7 @@ class BudgetWidgetUpdateCoordinator(
                             .map { it.widgetKey() }
                             .sortedBy { it.id }
                             .toList(),
+                        accent,
                     )
                 }
             }.distinctUntilChanged()
@@ -80,6 +84,7 @@ class BudgetWidgetUpdateCoordinator(
         val month: YearMonth,
         val limit: Money?,
         val transactions: List<TransactionKey>,
+        val accent: AccentColor,
     )
 
     /** Excludes merchant/category edits, but retains Review status changes and month movement. */

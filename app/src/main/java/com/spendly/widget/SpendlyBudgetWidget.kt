@@ -1,6 +1,7 @@
 package com.spendly.widget
 
 import android.content.Context
+import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -28,6 +29,7 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.spendly.R
 import com.spendly.SpendlyApplication
+import com.spendly.ui.theme.AccentColor
 import java.time.YearMonth
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -37,9 +39,9 @@ class SpendlyBudgetWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Responsive(setOf(DpSize(120.dp, 110.dp), DpSize(250.dp, 110.dp)))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val app = context.applicationContext as SpendlyApplication
         val state = withContext(Dispatchers.IO) {
             try {
-                val app = context.applicationContext as SpendlyApplication
                 BudgetWidgetDataProvider(app.transactionRepository, app.monthlyBudgetRepository).load()
             } catch (error: CancellationException) {
                 throw error
@@ -47,12 +49,15 @@ class SpendlyBudgetWidget : GlanceAppWidget() {
                 BudgetWidgetState.Error(YearMonth.now())
             }
         }
-        provideContent { BudgetWidgetContent(state) }
+        val accent = app.accentStore.selected.value
+        val darkTheme = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK ==
+            Configuration.UI_MODE_NIGHT_YES
+        provideContent { BudgetWidgetContent(state, accent, darkTheme) }
     }
 }
 
 @Composable
-private fun BudgetWidgetContent(state: BudgetWidgetState) {
+private fun BudgetWidgetContent(state: BudgetWidgetState, accent: AccentColor, darkTheme: Boolean) {
     val context = LocalContext.current
     val medium = LocalSize.current.width >= 250.dp
     Column(
@@ -62,7 +67,8 @@ private fun BudgetWidgetContent(state: BudgetWidgetState) {
             .padding(12.dp),
     ) {
         when (state) {
-            is BudgetWidgetState.Ready -> if (medium) MediumBudget(state) else SmallBudget(state)
+            is BudgetWidgetState.Ready -> if (medium) MediumBudget(state, accent, darkTheme)
+                else SmallBudget(state, accent, darkTheme)
             is BudgetWidgetState.NoBudget -> {
                 Heading("Spendly")
                 Spacer(GlanceModifier.height(8.dp))
@@ -82,17 +88,17 @@ private fun BudgetWidgetContent(state: BudgetWidgetState) {
 }
 
 @Composable
-private fun SmallBudget(state: BudgetWidgetState.Ready) {
-    Heading("Spendly")
+private fun SmallBudget(state: BudgetWidgetState.Ready, accent: AccentColor, darkTheme: Boolean) {
+    Heading(BudgetWidgetStateFactory.monthLabel(state.month))
     Spacer(GlanceModifier.height(4.dp))
-    Text(state.percentageLabel, style = TextStyle(color = ColorProvider(R.color.widget_text), fontSize = if (state.percentageUsed == null) 16.sp else 28.sp, fontWeight = FontWeight.Bold))
+    Emphasis(state.percentageLabel, state, accent, darkTheme, large = true)
     if (state.percentageUsed != null) Secondary("spent")
     Spacer(GlanceModifier.height(4.dp))
     Secondary(state.smallBalanceLabel)
 }
 
 @Composable
-private fun MediumBudget(state: BudgetWidgetState.Ready) {
+private fun MediumBudget(state: BudgetWidgetState.Ready, accent: AccentColor, darkTheme: Boolean) {
     Heading(BudgetWidgetStateFactory.monthLabel(state.month))
     Spacer(GlanceModifier.height(4.dp))
     Body(state.spentLimitLabel)
@@ -100,12 +106,23 @@ private fun MediumBudget(state: BudgetWidgetState.Ready) {
     LinearProgressIndicator(
         progress = state.visualProgress,
         modifier = GlanceModifier.fillMaxWidth(),
-        color = ColorProvider(R.color.widget_accent),
+        color = ColorProvider(WidgetEmphasisColor.resolve(accent, state.isOverBudget, darkTheme)),
         backgroundColor = ColorProvider(R.color.widget_track),
     )
     Spacer(GlanceModifier.height(6.dp))
-    Body(if (state.percentageUsed == null) state.percentageLabel else "${state.percentageLabel} spent")
+    Emphasis(if (state.percentageUsed == null) state.percentageLabel else "${state.percentageLabel} spent",
+        state, accent, darkTheme)
     Secondary(state.balanceLabel)
+}
+
+@Composable
+private fun Emphasis(value: String, state: BudgetWidgetState.Ready, accent: AccentColor, darkTheme: Boolean,
+    large: Boolean = false) {
+    Text(value, style = TextStyle(
+        color = ColorProvider(WidgetEmphasisColor.resolve(accent, state.isOverBudget, darkTheme)),
+        fontSize = if (state.percentageUsed == null) 16.sp else if (large) 28.sp else 24.sp,
+        fontWeight = FontWeight.Bold,
+    ))
 }
 
 @Composable

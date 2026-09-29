@@ -8,6 +8,7 @@ import com.spendly.domain.model.TransactionSource
 import com.spendly.domain.model.TransactionType
 import com.spendly.domain.repository.MonthlyBudgetRepository
 import com.spendly.domain.repository.TransactionRepository
+import com.spendly.ui.theme.AccentColor
 import java.time.Clock
 import java.time.Instant
 import java.time.YearMonth
@@ -33,8 +34,21 @@ class BudgetWidgetUpdateCoordinatorTest {
     private val clock = Clock.fixed(Instant.parse("2026-09-20T10:00:00Z"), ZoneId.of("Europe/Athens"))
     private val transactions = FakeTransactions()
     private val budgets = FakeBudgets()
+    private val accents = MutableStateFlow(AccentColor.Teal)
     private val updater = FakeUpdater()
-    private val coordinator get() = BudgetWidgetUpdateCoordinator(transactions, budgets, updater, clock, months)
+    private val coordinator get() = BudgetWidgetUpdateCoordinator(transactions, budgets, updater, clock, months, accents)
+
+    @Test fun accentChangeRefreshesWidgetWithoutDataChange() = runTest {
+        coordinator.start(backgroundScope)
+        settle()
+        assertEquals(1, updater.count)
+        accents.value = AccentColor.Purple
+        settle()
+        assertEquals(2, updater.count)
+        accents.value = AccentColor.Purple
+        settle()
+        assertEquals(2, updater.count)
+    }
 
     @Test fun manualInsertUpdateDeleteAndBudgetSaveEachRefresh() = runTest {
         coordinator.start(backgroundScope)

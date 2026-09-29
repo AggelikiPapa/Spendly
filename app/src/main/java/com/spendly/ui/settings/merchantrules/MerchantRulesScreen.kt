@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -62,7 +63,8 @@ fun MerchantRulesScreen(viewModel: MerchantRulesViewModel, contentPadding: Paddi
                         headlineContent = { Text(row.rule.merchantPattern) },
                         supportingContent = { Text(categoryLabel) },
                         trailingContent = {
-                            TextButton(onClick = { viewModel.requestDelete(row.rule.id) }, enabled = !state.isSaving) {
+                            TextButton(onClick = { viewModel.requestDelete(row.rule.id) }, enabled = !state.isSaving,
+                                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
                                 Text(stringResource(R.string.delete))
                             }
                         },
@@ -106,7 +108,10 @@ fun MerchantRulesScreen(viewModel: MerchantRulesViewModel, contentPadding: Paddi
             onDismissRequest = viewModel::cancelDelete,
             title = { Text(stringResource(R.string.delete_merchant_rule)) },
             text = { Text(stringResource(R.string.delete_merchant_rule_message)) },
-            confirmButton = { TextButton(onClick = viewModel::confirmDelete, enabled = !state.isSaving) { Text(stringResource(R.string.delete)) } },
+            confirmButton = { TextButton(onClick = viewModel::confirmDelete, enabled = !state.isSaving,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
+                Text(stringResource(R.string.delete))
+            } },
             dismissButton = { TextButton(onClick = viewModel::cancelDelete, enabled = !state.isSaving) { Text(stringResource(R.string.cancel)) } },
         )
     }

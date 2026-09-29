@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -81,7 +82,8 @@ fun EditTransactionScreen(
                 Button(onClick = viewModel::save, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(if (current.isSaving) R.string.saving else R.string.save_transaction))
                 }
-                OutlinedButton(onClick = viewModel::requestDelete, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = viewModel::requestDelete, enabled = !busy, modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
                     Text(stringResource(if (current.isDeleting) R.string.deleting else R.string.delete_transaction))
                 }
             }
@@ -95,7 +97,10 @@ fun EditTransactionScreen(
             title = { Text(stringResource(R.string.delete_transaction)) },
             text = { Text(stringResource(R.string.confirm_delete_transaction)) },
             confirmButton = {
-                TextButton(onClick = viewModel::confirmDelete) { Text(stringResource(R.string.delete_transaction)) }
+                TextButton(onClick = viewModel::confirmDelete,
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
+                    Text(stringResource(R.string.delete_transaction))
+                }
             },
             dismissButton = { TextButton(onClick = viewModel::cancelDelete) { Text(stringResource(R.string.cancel)) } },
         )

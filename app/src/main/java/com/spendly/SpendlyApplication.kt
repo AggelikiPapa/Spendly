@@ -22,19 +22,22 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import com.spendly.widget.AndroidBudgetWidgetUpdater
 import com.spendly.widget.BudgetWidgetUpdateCoordinator
+import com.spendly.ui.theme.SharedPreferencesAccentStore
 
 class SpendlyApplication : Application() {
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val database by lazy { SpendlyDatabaseProvider.get(this) }
 
     val budgetAlertStore by lazy { SharedPreferencesBudgetAlertStore(this) }
+    val accentStore by lazy { SharedPreferencesAccentStore(this) }
     val budgetAlertPermission by lazy { AndroidBudgetAlertPermission(this) }
     private val budgetAlertCoordinator by lazy {
         BudgetAlertCoordinator(transactionRepository, monthlyBudgetRepository, budgetAlertStore,
             budgetAlertPermission, AndroidBudgetAlertSender(this))
     }
     private val budgetWidgetUpdateCoordinator by lazy {
-        BudgetWidgetUpdateCoordinator(transactionRepository, monthlyBudgetRepository, AndroidBudgetWidgetUpdater(this))
+        BudgetWidgetUpdateCoordinator(transactionRepository, monthlyBudgetRepository,
+            AndroidBudgetWidgetUpdater(this), accents = accentStore.selected)
     }
 
     override fun onCreate() {
